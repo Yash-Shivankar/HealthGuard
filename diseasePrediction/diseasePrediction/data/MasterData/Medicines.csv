@@ -1,0 +1,99 @@
+Name of the diseases,Medicine 1,Medicine 2,Medicine 3,Home remedie 1
+Fever,Acetaminophen (Tylenol),"Ibuprofen (Advil, Motrin)",Aspirin,Hydration
+Hyperthermia ,Cooling Blankets,Intravenous (IV) Fluids ,Acetaminophen,Cool Water Compress
+Rash ,Hydrocortisone Cream,Antihistamines ,Topical calamine lotion,Aloe vera gel
+Generalized fatigue,Caffeine ,Modafinil,Prescripton Stimulants ,Adequate sleep
+Weight loss,Orlistat ,Phentermine ,Liragultide ,Healthy diet 
+Chest pain,Nitroglycerin ,Aspirin ,Antacids,Deep breathimg exercises
+Palpitations,Beta-Blockers ,Antiarrhythmic Medications,Calcium Channel Blockers ,Deep breathimg exercises
+Dyspnea ,Albuterol ,Prednisone,Oxygen therapy,Steam inhalation 
+Cyanosis ,Oxygen therapy ,Inhaled bronchodilators ,Medications ,Warm compress 
+Cough ,Cough syrup,Expectorants like guaifensin,Anithistamines,Honay and warm water 
+Hemaptysis ,Tranexamic acid ,cough suppressants ,Antibotics ,Steam inhalation 
+Edema ,Diuretics ,ACE inhibitors ,Compression stockings,Elevation of the affected limb 
+Abdominal pain ,Ibuprofen ,Acetaminophen ,Antacids,Ginger tea 
+Nausea ,Ondansetron ,Dimenhydrinate ,Meclizine ,Ginger tea 
+Vomiting ,Ondansetron ,Metoclorpramide ,Promethazine,Ginger tea 
+Indigestion ,Antacids,H2 blockers ,Proton pump inhibitors ,Baking soda 
+Dysphagia ,Omeprazole,Ranitidine,Esomeprazole ,Honey and lemon
+Diarrhea ,Loperamide ,Diphenoxylate\Atropine ,Bismuth subsalicylate ,Drink clear liquid 
+Malabsorption ,Loperamide ,Pancrelipase ,Bismuth subsalicylate ,Ginger tea 
+Constipation ,Psyllium ,Docusate sodium ,Polyethylene glycol ,Increase fibre intake
+Gastrointestinal Bleeding ,Proton pump inhibitors ,H2 blockers ,Antibotics ,Avoid spicy and acidic foods 
+Jaundice ,Ursodeoxycholic acid ,N-acetylcyteine ,Silymarin ,Increase water intake
+Evalution of liver function ,Liver function tests ,Fibroscan ,Liver Biopsy , Healthy diet rich in fruits and vegtables 
+Asites ,Diuretics ,Albumin infusions ,Paracentesis ,Low-sodium diet 
+Lymphadenopathy,Antibuiotics (if causing inflammation),Steroids (for reducing inflammation),Chemotherapy (for lymphoma),Warm compress 
+Splenomegaly,Corticosteroids ,caffein ,Splenoectomy (in severse cases),Rest and avoiding strenuous activites 
+Aneamia ,Iron supplements ,Vitamin B12 injections ,Folic acid supplements ,Diet rich in iron 
+Polycythemia ,Phlebotomy ,Hydroxyurea ,Interferon-alpha ,Maintaining hydration 
+Azotemia ,Diuretics ,Angiotensin-converting enzyme ,Angiotensin II receptor ,Limting protein intake 
+Urinary Abnormalities ,Antibiotics (for urinary infections) ,Diuretics ( for fluid retention) ,Alpha-blockers ( for urinary symptoms),Drink clear liquid 
+Pain and swelling in joint,Nonsteroidal anti-inflammatory drugs ,Cortiscosteroids ,Disease-modifying antireheumatic durgs ,Rest and elevation 
+Back pain,Nonsteroidal anti-inflammatory drugs ,Muscle relaxants ,Opioid pain medications ,Hot or cold packs 
+Neck pain,Nonsteroidal anti-inflammatory drugs ,Muscle relaxants ,Topical pain relivers ,Hot or cold packs 
+Headache,Acetaminophen (Tylenol),"Ibuprofen (Advil, Motrin)",Aspirin,"Rest in a quiet, dark room "
+Syncope,Fludrocortisone,Midodrine ,Beta blockers ,Stay hydrated 
+Dizziness,Meclizine ,,Betahistine ,Stay hydrated 
+Vertigo,Meclizine ,Diazepam,Betahistine ,Epley maneuver 
+Acute visual loss,Anti-VEGF injections ,Cortiscosteroids ,Anticoagulants ,Rest your eyes 
+Double vision,Prism glasses ,Botulinum toxin injections ,Eye patching ,Eye exercises 
+Weakness,Vitamin B12 supplements ,Iron supplements ,Steroids ,A balaced diet 
+paralysis ,Tissue plasminogen activator ,Antiplatelet drugs ,Physical therapy,Occupational therapy 
+Tremor,Propranolol ,Primidone ,Benzodiazepines ,Relaxation Techniques 
+Movement disorder ,Levodopa ,Dopamine agonists ,Anticholinergic drugs ,Regular exercise 
+Aphasia ,Speech therapy ,Cognitive rehabilitation therapy ,Melodic intonation therapy ,Practice speech exercises 
+Sleep disorder ,Melatonin supplements ,Benzodiazepines,Antidepressants ,Establish a regular sleep schedule 
+Dysuria ,Antibotics,Pain relievers ,Urinary tract analgesic,Imceased water intake 
+Bladder pain,Antispasmodic medications ,Pain relievers ,prescription medications ,Hot or cold compress 
+Sore throat ,Ibuprofen ,Throat lozenges ,Cough syrup,Honey and warm water gargle 
+Earache,Acetaminophen (Tylenol),Ear drops,Ibuprofen ,Warm compress 
+Upper respiratory ,Decongestants ,Antihistamines ,Cough suppressants ,Steam inhalation 
+Cardiaovasular collapse ,Epinephrine ,Atropine ,Intravenous fluids ,Cardiopulmonary resuscitation 
+Sudden death ,NONE ,NONE ,NONE,NONE 
+Sepsis ,Intravenous antibiotics ,Vasopressors ,Steroids ,Rest 
+Septic shock ,Intravenous antibiotics ,Vasopressors ,Intravenous fluids ,NONE-Seek urgent medical care 
+Acute pulmonary edema,Furosemide ,Nitroglycerin ,Morphine ,Elevating legs 
+Acute resipratory distress syndrome ,Oxygen therapy ,Ventilator support ,Intravenous fluids ,Rest and proper sleep 
+Respiratory failure ,Mechanical ventilation ,Oxygen therapy ,Diuretics ,Deep breathimg exercises
+Confusion,Donepezil ,Memantine ,Rivastigmine ,Maintain a structured routine 
+Stupor ,Naloxone ,Flumazenil ,Diazepam,Keep the person awake and alert 
+Coma ,Intravenous fluids  ,Medications to control intracrainal pressure ,Antibiotics ,There are no home remedies for coma;medical interventrion is necessary  
+Stroke ,Tissue plasminogen activator ,Aspirin ,Antiplatelet medications ,Balanced diet
+Subarachnoid hemorrhage ,Nimodipine ,Anticonvulsants ,Pain relivers ,Rest and avoid strenuous activities 
+Increased intracranial preesure ,Mannitol ,Hypertonic saline solution ,Corticosteroids ,Maintain head elevation while sleeping 
+Head trauma ,Pain relievers ,Anti-inflammatory medications ,Anti-nausea medications ,Apply ice to the affected area to reduce swelling 
+Spinal cord compression ,Corticosteroids ,Pain relievers ,Muscle relaxants ,Rest 
+Hypoxic-ischemic encephalopathy ,Hypothermia therapy ,Seizure medications ,Intravenous fluids ,NONE 
+Status epilepticus ,Diazepam ,Lorazepam ,Midazolam ,Stay with the person and keep them safe during a seizure 
+Diabetic ketoacidosis ,Insulin ,Intravenous (IV) Fluids ,Electrolyte replacement ,NONE 
+ Hyperosmolar coma,Insulin ,Intravenous (IV) Fluids ,Electrolyte replacement ,Increase water intake 
+Hypoglycemia ,Glucose tablets ,Glucagon injection ,Oral glucose gel ,Cosuming sugary foods or drinks 
+Oncologic Emergencies ,Pain relievers ,Antiemetics ,Corticosteroids ,Rest and proper hydration 
+Anaphylaxis ,Epinephrine ,Antihistamines ,Bronchodilators ,Applying a clod compress 
+Bites ,Antibiotics  ,Tetanus antihistamines ,Topical antihistamines ,Cleaning the wound with soap and water 
+Venoms ,Antivenom ,Pain relievers ,Antihistamines ,Applying a clod compress 
+Stings,Pain relievers ,Antihistamines ,Topical corticosteriods ,Applying a clod compress 
+Marine poisonings ,Activated charcoal ,Antiemetics ,Intravenous fluids ,Rinsing affected area with vinegar 
+Blood smears,Antimalarial medications,Blood thinners ,Iron supplements ,Maintaining a balanced diet rich in iron
+Bone marrow ,Chemotherapy drugs ,Immunosuppressive ,Growth factors ,Consuming a balanced diet with iron-rich foods 
+Leukocytosis ,Antibiotics , Corticosteroids ,Chemotherapy drugs ,Staying hydrated 
+Red blood cell disorder,Iron supplements,Erythropoietin-stimulating agents ,Blood transfusoins ,Consuming iron-rich foods 
+Leukopenia ,Granulocyte-colony stimulating factor ,Antibyotics ,Antifungal mediactions ,Practicing good hand hygine 
+Bleeding,Blood clothing factors ,Platelet transfusions ,Desmopressin ,Applying pressure to the wound 
+Thrombotic disorders,Anticoagulants ,Antiplatelet drugs , Thrombolytic agents ,Maintaining a healthy lifestyle with regular exercise 
+Myeloid leukemias ,Chemotherapy drugs ,Targeted therapies ,Stem cell transplantb ,Maintaing a nutritious diet 
+Myelodysplasis ,Growth factors ,Hypomethylating agents ,Immunosuppressive therapy ,Eating a balanced diet with iron-rich foods 
+Myeloproliferative ,JAK inhibitors ,Chemotherapy drugs ,Antiplatelet agents ,Miantaing a balanced diet 
+Lymphoid malignancies ,Chemotherapy drugs ,Monoclonal antibodies ,Targeted therapies ,Eating a nutritious diet 
+Skin cancer ,Topical chemotherapy,Immunotherapy,Targeted therapies ,Regular exercise 
+Head cancer ,Chemotherapy drugs ,Radiation therapy ,Targeted therapies ,Miantaing a balanced diet 
+Neck cancer ,Chemotherapy drugs ,Raduation therapy,Targeted therapies ,Maintaining a balanced diet rich in iron
+Lung cancer ,Chemotherapy  ,Immunotherapy,Targeted therapies ,Ginger tea 
+Breast cancer ,Tamoxifen ,Herceptin ,Anastrozole ,Flaxseed 
+Tumors of the gastrointestinal tract ,Imatinib ,Regorfenib ,Bevacizumba ,Aloe vera gel
+Genitourinary tract cancer ,Ciprofloxain ,Tamsulosin ,Methenamine ,Cranberry juice 
+Gynecologic cancer ,Carboplatin,Paclitaxel ,Trastuzumab ,Tumeric supplements 
+Prostate hyperplasia ,Finasteride ,Tamsulosin ,Dutasteride ,Saw palmetto seed  oil 
+Carcinoma ,Surgery ,Chemotherapy drugs ,Radiation therapy ,Aloe vera gel
+Hypertersion ,Lisinopril ,Amlodipine ,Hydrochlorothiazide ,DASH diet 

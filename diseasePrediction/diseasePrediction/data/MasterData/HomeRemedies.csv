@@ -1,0 +1,140 @@
+Name of the diseases,Home remedie 1,Home remedie 2,Home remedie 3
+Fever,Hydration,Rest,Sponge Bath
+Hyperthermia ,Cool Water Compress,Rest in a cool environment ,Hydration
+Rash ,Aloe vera gel,Oatmeal bath,Cold compress
+Generalized fatigue,Adequate sleep,Regular exercise ,Stress reducation Techniques
+Weight loss,Healthy diet ,Regular exercise ,Adequate exercise 
+Chest pain,Deep breathimg exercises,Resting in a comfortable position ,Drinling warm water 
+Palpitations,Deep breathimg exercises,Stay hydrated,Reduce caffein and alcohol intake
+Dyspnea ,Steam inhalation ,Honey and ginger tea ,Breathing exercises 
+Cyanosis ,Warm compress ,Stay hydrated,Avoid exposure to cold temperatures 
+Cough ,Honay and warm water ,Ginger tea ,Steam inhalation 
+Hemaptysis ,Steam inhalation ,Stay hydrated,Maintain a humid environment 
+Edema ,Elevation of the affected limb ,Reduced sodium intake ,Massage therapy
+Abdominal pain ,Ginger tea ,Heating pad ,Peppermint oil 
+Nausea ,Ginger tea ,Pappermint,Lemon
+Vomiting ,Ginger tea ,Peppermint tea ,Bland diet 
+Indigestion ,Baking soda ,Chamomile tea ,Fennel seeds 
+Dysphagia ,Honey and lemon,Aloe vera juice ,Difficulty swallowing 
+Diarrhea ,Drink clear liquid ,"BRAT diet (bananas,rice ,toast)",Probiotics 
+Malabsorption ,Ginger tea ,Turmeric ,Peppermint oil 
+Constipation ,Increase fibre intake,Stay hydrated,Regular physical activity 
+Gastrointestinal Bleeding ,Avoid spicy and acidic foods ,Probiotics ,Aloe vera juice 
+Jaundice ,Increase water intake,Avoid Alcohol ,Eat food rich in vitamin C
+Evalution of liver function , Healthy diet rich in fruits and vegtables ,Regular exercise ,Limit alcohol intake 
+Asites ,Low-sodium diet ,Limit fluid intake ,Elevate legs 
+Lymphadenopathy,Warm compress ,Rest and hydration ,Gargling with warm salit water 
+Splenomegaly,Rest and avoiding strenuous activites ,Maintaining a healthy diet ,Warm compress
+Aneamia ,Diet rich in iron ,Eating foods high in vitamin C,Avoiding tea and coffee with meals 
+Polycythemia ,Maintaining hydration ,Avoiding smoking ,Regular physical activity 
+Azotemia ,Limting protein intake ,Hydration ,Avoiding Nonsteroidal anti-inflammatory dugrs 
+Urinary Abnormalities ,Drink clear liquid ,Cranberry juice ,Avoid caffeine and spicy foods 
+Pain and swelling in joint,Rest and elevation ,Ice packs ,Turmeric supplements 
+Back pain,Hot or cold packs ,Gentle exercise ,Maintain good posture 
+Neck pain,Hot or cold packs ,Neck exercise ,Good neck posture 
+Headache,"Rest in a quiet, dark room ",Hydration ,Cold compress
+Syncope,Stay hydrated ,Avoid triggers ,Elevate legs 
+Dizziness,Stay hydrated ,Practice deep breathing ,Ginger tea 
+Vertigo,Epley maneuver ,Ginkgo biloba ,Hydration
+Acute visual loss,Rest your eyes ,Maintain healthy blood pressure ,Cold compress 
+Double vision,Eye exercises ,Rest your eyes ,Maintain proper lighting 
+Weakness,A balaced diet ,Regular exercise ,Adequate  sleep 
+paralysis ,Occupational therapy ,Speech therapy ,Assistive devices 
+Tremor,Relaxation Techniques ,Avioding stimulants like caffeine ,Regular exercise 
+Movement disorder ,Regular exercise ,Deep brain stimulation ,Physical therapy 
+Aphasia ,Practice speech exercises ,Use communication boards ,Encourage conversation 
+Sleep disorder ,Establish a regular sleep schedule ,Create a realaxing  bedtime routine ,Limit screen time before sleep 
+Dysuria ,Imceased water intake ,Cranberry juice ,Warm compress
+Bladder pain,Hot or cold compress ,Increased water intake ,Avoiding irritating foods 
+Sore throat ,Honey and warm water gargle ,Ginger tea ,Salt water gargle 
+Earache,Warm compress ,Olive oil drops ,Chewing gum 
+Upper respiratory ,Steam inhalation ,Nasal irrigation ,Honey and warm water gargle 
+Cardiaovasular collapse ,Cardiopulmonary resuscitation ,Mouth-to-mouth resuscitation ,Position the person flat with their legs elevated 
+Sudden death ,NONE ,NONE ,NONE 
+Sepsis ,Rest ,Staying hydrated ,Proper wound care 
+Septic shock ,NONE-Seek urgent medical care ,NONE-Seek urgent medical care,NONE-Seek urgent medical care 
+Acute pulmonary edema,Elevating legs ,Breathing exercises,Limiting sodium intake 
+Acute resipratory distress syndrome ,Rest and proper sleep ,Warm saline gargle ,Steam inhalation 
+Respiratory failure ,Deep breathimg exercises,Humidifier usage ,Chest physiotherapy 
+Confusion,Maintain a structured routine ,Encourage social interaction ,Engage in mental exercises 
+Stupor ,Keep the person awake and alert ,Offer water or clean fluids ,"Provide a quiet ,comfortable environment  "
+Coma ,There are no home remedies for coma;medical interventrion is necessary  ,Coma patients need professional medical care should not be treated at home ,Supportive care and a calm environment are essential 
+Stroke ,Balanced diet,Regular exercise ,Monitoring and managing high blood pressure 
+Subarachnoid hemorrhage ,Rest and avoid strenuous activities ,Manage ab healthy blood pressure through diet and exercise ,Manage stress through relaxation techniques 
+Increased intracranial preesure ,Maintain head elevation while sleeping ,Avoid activities that increases intracranial pressure ,Stay hydrated 
+Head trauma ,Apply ice to the affected area to reduce swelling ,Monitor for signs of concussiona and seek medical help is necessary ,Rest and avoid physical strain 
+Spinal cord compression ,Rest ,Physical therapy exercises to improve flexibility ,Warm or cold compress for pain relief 
+Hypoxic-ischemic encephalopathy ,NONE ,Providing a calm ,Quiet environment can be suppprtive for the patient
+Status epilepticus ,Stay with the person and keep them safe during a seizure ,Remove nearby harmful objects ,Time the duration of the seizure 
+Diabetic ketoacidosis ,NONE ,Monitoring blood sugar levels regularly ,Following a prescribed diabetes managent plan 
+ Hyperosmolar coma,Increase water intake ,Monitor blood sugar levels regularly ,Follow a balanced diet 
+Hypoglycemia ,Cosuming sugary foods or drinks ,"Eating small, frequent meals ",Balacing carbohydrates and proteins in meals 
+Oncologic Emergencies ,Rest and proper hydration ,"Mild, bland diet ",Comfort measures 
+Anaphylaxis ,Applying a clod compress ,Keeping the person in a reclined position ,Avoiding known allergens 
+Bites ,Cleaning the wound with soap and water ,Using over-the-counter pain relievers  ,Applying a cold compress  
+Venoms ,Applying a clod compress ,Keeping the affected area elevated ,Avoid tight clothing or jewelry 
+Stings,Applying a clod compress ,Baking soda paste ,Calamine lotion  
+Marine poisonings ,Rinsing affected area with vinegar ,Applying heat to the affected area ,Consuming ginger or ginger tea
+Blood smears,Maintaining a balanced diet rich in iron,Hydration well and avoiding dehydration ,Geeting regular exercise to improve circulation 
+Bone marrow ,Consuming a balanced diet with iron-rich foods ,Getting regular exercise to maintain bone health ,Adequate rest and stress management 
+Leukocytosis ,Staying hydrated ,"Consuming  a healthy, balanced diet ",Avoiding exposure to infections 
+Red blood cell disorder,Consuming iron-rich foods ,Getting regular exercise and managing stress ,Avoiding alcohal and smoking 
+Leukopenia ,Practicing good hand hygine ,Avoiding crowded places and sick individuals ,Eating a balanced diet and stay hydrated 
+Bleeding,Applying pressure to the wound ,Elevating the affected area ,Using ice packs 
+Thrombotic disorders,Maintaining a healthy lifestyle with regular exercise ,Staying hydrated ,Avioding prolonged periods of inactivitysuch as sitting 
+Myeloid leukemias ,Maintaing a nutritious diet ,Getting regular exercise ,Managing stress through relaxation techniqes 
+Myelodysplasis ,Eating a balanced diet with iron-rich foods ,Avoiding exposure tontoxinsn ,Regular exercise and stress managent 
+Myeloproliferative ,Miantaing a balanced diet ,Regular exercise ,Avoiding smoking and alcohol consumption 
+Lymphoid malignancies ,Eating a nutritious diet ,Regular exercise ,Adequate reat and sleep
+Skin cancer ,Regular exercise ,Wearing protective clothing and hats ,Avoiding sun exposure during peak hours 
+Head cancer ,Miantaing a balanced diet ,Practcing good oral hygiene ,Stress management techniques 
+Neck cancer ,Maintaining a balanced diet rich in iron,Stress management techniques ,Practicing good oral hygiene 
+Lung cancer ,Ginger tea ,Deep breathing exercise ,Yoga and meditation 
+Breast cancer ,Flaxseed ,Tumeric ,Green tea 
+Tumors of the gastrointestinal tract ,Aloe vera gel,Peppermint tea ,Probiotics 
+Genitourinary tract cancer ,Cranberry juice ,Kegel exercises ,Hydration 
+Gynecologic cancer ,Tumeric supplements ,Green tea extract ,Yoga and meditation 
+Prostate hyperplasia ,Saw palmetto seed  oil ,Kegel exercises ,Pumpkin seed oil 
+Carcinoma ,Aloe vera gel,Tumeric ,Ginger tea 
+Hypertersion ,DASH diet ,Regular exercise ,Reduced sodium intake 
+Chickenpox,Neem,Hot water,Neem juice
+Fungal infection,Tea tree oil applied topically,Garlic paste application,Apple cider vinegar diluted as a topical solution
+Allergy,Honey and lemon drink for soothing.,Cold compresses to alleviate irritation,Neti pot saline rinse for nasal allergies
+Gerd,Chamomile tea to ease digestion,Baking soda and water mixture for relief,Slippery elm lozenges for throat soothing
+Chronic cholestasis,Milk thistle supplements for liver support, Dandelion root tea to aid bile flow,Turmeric consumption for anti-inflammatory effects
+Drug Reaction,Applying cool compresses to alleviate skin irritation,Drinking ginger tea to ease nausea,Taking probiotics to restore gut balance.
+Peptic ulcer disease,"Eating small, frequent meals to avoid aggravating the ulcer.",Consuming honey to help soothe the stomach lining.,Drinking cabbage juice for potential ulcer-healing properties.
+AIDS,Adhering to antiretroviral therapy for management.,Maintaining a balanced diet to support immune function.,Practicing safe sex and using barrier methods to prevent transmission.
+Diabetes,Regular exercise to regulate blood sugar levels.,Consuming cinnamon to potentially improve insulin sensitivity.,Drinking bitter gourd juice to help lower blood glucose levels.
+Gastroenteritis,Stay hydrated with electrolyte solutions,Drink ginger tea for nausea relief.,Eat bland foods like bananas and rice
+Bronchial Asthma,Use a humidifier to ease breathing.,Consume honey for throat irritation.,Practice deep breathing exercises for relaxation
+Hypertension, Reduce sodium intake for blood pressure control,Increase potassium-rich foods like bananas,Practice stress-reducing activities such as yoga or meditation.
+Migraine,Apply peppermint oil to temples for pain relief,Drink ginger tea to alleviate nausea,Use cold compresses on the forehead to ease discomfort.
+Cervical spondylosis,Practice neck exercises for flexibility and strength.,Apply hot or cold compresses to reduce pain and inflammation,Use proper posture and ergonomic support for the neck and spine.
+Paralysis,Physical therapy for muscle strength and mobility,Herbal supplements like ginkgo biloba for circulation support.,Occupational therapy for daily living skills adaptation.
+Jaundice, Drink plenty of water to flush out toxins.,Consume foods high in antioxidants like green leafy vegetables.,Have sugarcane juice to boost liver function.
+Malaria,Drink quinine-containing tonic water.,Use mosquito nets and repellents for prevention., Take herbal remedies like Artemisia annua extract.
+Chicken pox, Apply calamine lotion to soothe itching.,Take oatmeal baths for relief from discomfort,Drink herbal teas like chamomile for immune support
+Dengue, Stay hydrated with electrolyte-rich fluids.,Use papaya leaf extract for platelet support,Rest to aid in recovery and prevent complications.
+Typhoid,Drink boiled water to prevent dehydration.,Consume probiotic-rich foods for gut health,"Eat light, easily digestible meals like broth and rice"
+Hepatitis A,Stay hydrated with water and electrolyte solutions,Rest to aid in recovery and reduce fatigue,Avoid alcohol and fatty foods to ease strain on the liver.
+Hepatitis B,Get vaccinated for prevention,Consume milk thistle for liver support.,Practice safe sex and avoid sharing needles
+Hepatitis C,Seek medical treatment for antiviral therapy.,Consume licorice root for potential liver support,Practice safe sex and avoid sharing needles to prevent transmission.
+Hepatitis D,Consult a healthcare professional for treatment options.,Consume milk thistle for potential liver support,Practice safe sex and avoid sharing needles to prevent transmission.
+Hepatitis E,Ensure access to clean water and hygienic food., Rest to aid in recovery and reduce fatigue.,Avoid alcohol and fatty foods to ease strain on the liver.
+Alcoholic Hepatitis,Seek medical assistance for professional treatment.,Consume milk thistle for potential liver support.,Abstain from alcohol to prevent further damage.
+Tuberculosis, Follow prescribed antibiotic treatment diligently.,Consume garlic for potential antimicrobial effects.,Ensure proper nutrition to support immune function.
+Common Cold,Drink hot tea with honey for throat relief,Use saline nasal spray to clear congestion,Rest and stay hydrated for faster recovery
+Pneumonia,Take prescribed antibiotics for bacterial pneumonia.,Use steam inhalation to ease breathing.,Stay hydrated and rest for faster recovery.
+Dimorphic hemmorhoids,Apply witch hazel pads for soothing relief., Increase fiber intake to soften stools and ease bowel movements.,Take warm sitz baths to reduce discomfort and inflammation.
+Heart attack,Call emergency services immediately for medical attention.,Chew aspirin to help prevent blood clotting,Stay calm and lie down while waiting for help.
+Varicose veins, Elevate legs to reduce swelling and improve circulation.,Wear compression stockings for added support.,Exercise regularly to strengthen leg muscles and improve blood flow
+Hypothyroidism,Consume iodine-rich foods like seaweed for thyroid support.,Practice stress-reducing techniques like yoga or meditation.,Ensure adequate intake of selenium through foods like Brazil nuts.
+Hypoglycemia,"Consume small, frequent meals to stabilize blood sugar.",Have a snack with protein and complex carbs for sustained energy.,Keep glucose tablets or candies on hand for quick relief in emergencies.
+Osteoarthritis,Apply heat or cold packs to alleviate pain and inflammation,Engage in low-impact exercises like swimming or walking,Take turmeric supplements for potential anti-inflammatory benefits.
+Arthritis,Apply topical capsaicin cream for pain relief.,Try acupuncture for symptom management.,Consume omega-3 fatty acids for potential anti-inflammatory effects.
+Paroymsal positional vertigo,Perform Epley maneuver under supervision for repositioning,Limit head movements to avoid triggering vertigo.,Stay hydrated and maintain proper balance
+Acne,Use tea tree oil for its antibacterial properties, Apply benzoyl peroxide to unclog pores.,Try a honey and cinnamon mask for its anti-inflammatory effects.
+Urinary tract infection,Drink plenty of water to flush out bacteria,Consume cranberry juice for potential prevention.,Use a heating pad to alleviate discomfort.
+Psoriasis,Apply moisturizers to soothe dry skin, Use coal tar products to reduce inflammation,Take warm oatmeal baths for symptom relief.
+Impetigo,Apply topical antibiotic ointment to affected areas.,Keep the skin clean and dry to prevent spreading.,Use warm compresses to help alleviate discomfort.

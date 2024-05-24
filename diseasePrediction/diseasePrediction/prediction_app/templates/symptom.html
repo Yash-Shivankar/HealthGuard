@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Health Guard - Symptoms Checker</title>
+  <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
+</head>
+<body>
+ <!-- ======= Header ======= -->
+  <header id="header" class="d-flex align-items-center">
+    <div class="container d-flex align-items-center justify-content-between">
+      <div class="logo">
+        <h1><a href="{% url 'home' %}">Health Guard</a></h1>
+      </div>
+    </div>
+  </header>
+
+  <div class="form-container">
+    <h2>Enter Symptoms Details</h2>
+    <form action="{% url 'predict' %}" method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="symptoms">Select your symptoms:</label><br>
+        <select id="symptoms" name="symptoms[]" class="symptoms" multiple="multiple" style="width: 100%;">
+          {% for symptom in symptoms %}
+            <option value="{{ symptom }}">{{ symptom }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="days">How many days have you been experiencing symptoms?</label><br>
+        <input type="number" id="days" name="days" min="1" required><br><br>
+      </div>
+            <button type="submit" value="submit">Submit</button>
+    </form>
+  </div>
+
+  <!-- Include jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Include Select2 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Initialize Select2
+      $('.symptoms').select2();
+    });
+  </script>
+
+  <!-- ======= Footer ======= -->
+<!--  <footer id="footer">-->
+<!--    <div class="container footer-bottom clearfix">-->
+<!--      <div class="copyright">-->
+<!--        &copy; Copyright <strong><span>HealthGuard</span></strong>. All Rights Reserved-->
+<!--      </div>-->
+<!--      <div class="credits">-->
+<!--        Designed by <a href="https://www.linkedin.com/in/yash-shivankar-190153197">Yash&Team</a>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--  </footer>&lt;!&ndash; End Footer &ndash;&gt;--><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>
