@@ -1,24 +1,3 @@
-# HealthGuard — runtime dependencies (AUDIT §2.15: pinned, reproducible)
-#   install:  pip install -r requirements.txt
-#   dev/test: pip install -r requirements-dev.txt
-
-# --- Web framework ---
-Django==5.2.9
-django-environ==0.12.0          # 12-factor settings; secrets out of git (§2.2)
-asgiref==3.11.0
-sqlparse==0.5.4
-tzdata==2025.2
-
-# --- ML / data ---
-# scikit-learn is pinned exactly: a model pickled under one minor version and
-# loaded under another warns or fails (§2.15). The artefact in ml/artifacts/
-# records the version it was trained with and predictor.py refuses a mismatch.
-scikit-learn==1.7.2
-numpy==2.3.5
-pandas==2.3.3
-scipy==1.16.3
-joblib==1.5.2
-threadpoolctl==3.6.0
-python-dateutil==2.9.0.post0
-pytz==2025.2
-six==1.17.0
+# Kept as a convenience shim so `pip install -r requirements.txt` still works.
+# The real files are in requirements/ (AUDIT 7.1).
+-r requirements/base.txt

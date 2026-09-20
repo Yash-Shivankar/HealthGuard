@@ -32,14 +32,57 @@ python manage.py runserver
 The admin is **not** at `/admin/` — it is mounted at `DJANGO_ADMIN_URL` from
 your `.env` (default `internal-ops/`).
 
+### Postgres
+
+SQLite works for a quick start, but Postgres is the target (AUDIT §11.1):
+
+```bash
+docker compose up -d db
+```
+
+Then set `DATABASE_URL` in `.env` to
+`postgres://healthguard:healthguard@127.0.0.1:5432/healthguard` and migrate.
+
+### Settings
+
+`manage.py` defaults to `config.settings.dev`. Production must set
+`DJANGO_SETTINGS_MODULE=config.settings.prod`, which applies HTTPS and cookie
+hardening unconditionally rather than behind a `DEBUG` check.
+
 ## Tests
 
 ```bash
 python -m pytest
 ```
 
-Every test in `prediction_app/tests/test_views.py::TestCrashPaths` pins an
-exception the audit reproduced against the running application.
+Runs on in-memory SQLite. To run the same suite against Postgres — which CI
+should do, because SQLite and Postgres disagree about constraint timing, JSON
+operators and transaction behaviour:
+
+```bash
+TEST_DATABASE_URL=postgres://healthguard:healthguard@127.0.0.1:5432/healthguard_test python -m pytest
+```
+
+Every test in `apps/triage/tests/integration/test_web_flow.py::TestCrashPaths`
+pins an exception the audit reproduced against the running application.
+
+## API
+
+`/api/v1/`, with an OpenAPI schema at `/api/v1/schema/` and Swagger UI at
+`/api/v1/docs/`.
+
+| Endpoint | What it does |
+|---|---|
+| `POST /api/v1/patients/intake/` | Register details, record consent |
+| `GET /api/v1/patients/me/` | The intake record held in this session |
+| `DELETE /api/v1/patients/me/` | Withdraw consent and erase the record |
+| `GET /api/v1/triage/symptoms/` | The symptom vocabulary the model accepts |
+| `POST /api/v1/triage/check/` | Run a check, get a ranked differential |
+
+The API and the HTML pages call the same service layer, so they cannot drift.
+There is deliberately **no** endpoint that lists patients or fetches one by id:
+until the `accounts` app brings authentication and per-clinic scoping in
+Phase 4, that would be a cross-tenant leak with no tenants (AUDIT §8.7).
 
 ## Retraining the model
 
@@ -55,23 +98,44 @@ number about this model.
 ## Layout
 
 ```
-diseasePrediction/   Django project config only (settings, root urls, wsgi/asgi)
-prediction_app/      the application
-  ├── services/      business logic: content, predictor, triage
-  ├── forms.py       all server-side validation
-  ├── views.py       HTTP only — no CSV reads, no training, no business rules
-  └── tests/
+config/              Django project package only
+  ├── settings/      base · dev · prod · test
+  ├── urls.py        root router
+  └── api.py         /api/v1/ router
+apps/                one app per bounded context
+  ├── patients/      patient master
+  ├── consent/       DPDP consent artefacts
+  └── triage/        symptom intake and prediction
+common/              middleware, shared Django building blocks
+utils/               validators, domain exceptions, logging, pagination
 ml/                  offline training; not imported by the app at runtime
   ├── dataset.py     canonical data loading and cleaning
   ├── train.py       the pipeline
   └── artifacts/     versioned model + metrics + model card
+templates/  static/  the server-rendered surface
 data/                source CSVs, as delivered
 docs/                AUDIT.md, HISTORY.md
 ```
 
-The boundary that keeps this honest: **views never contain business rules,
-services never touch HTTP.** Violate it once and you are back to the 193-line
-`views.py` the audit found.
+Each app is layered the same way (AUDIT §7.1):
+
+```
+routes/         URL -> controller
+controllers/    HTTP only: parse, authorise, respond
+services/       business rules; no ORM, no HTTP
+repositories/   the ONLY place ORM queries live
+serializers/    DRF validation in and out
+admin/          one ModelAdmin per file
+```
+
+The rule that keeps it honest: **controllers never touch the ORM, services
+never touch HTTP, repositories never contain business logic.** Violate it once
+and you are back to the 193-line `views.py` the audit found.
+
+The apps the audit provisions but that do not exist yet — `accounts`,
+`encounters`, `abdm`, `audit` — are deliberately absent rather than scaffolded
+empty. They belong to Phases 4–6, and an empty app is a liability, not a head
+start.
 
 ## What this model is, honestly
 

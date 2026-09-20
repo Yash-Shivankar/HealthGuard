@@ -1,0 +1,32 @@
+# HealthGuard — runtime dependencies (AUDIT 2.15: pinned, reproducible)
+
+# --- Web framework ---
+Django==5.2.9
+django-environ==0.12.0          # 12-factor settings; secrets out of git (2.2)
+asgiref==3.11.0
+sqlparse==0.5.4
+tzdata==2025.2
+
+# --- API (AUDIT Phase 2) ---
+djangorestframework==3.16.1
+django-filter==25.2
+drf-spectacular==0.28.0
+
+# --- Database ---
+# psycopg 3. Postgres is the target (11.1); DATABASE_URL still allows SQLite
+# for local work and tests.
+psycopg[binary]==3.2.10
+
+# --- ML / data ---
+# scikit-learn is pinned exactly: a model pickled under one minor version and
+# loaded under another warns or fails (2.15). The artefact records the version
+# it was trained with and predictor.py refuses a mismatch.
+scikit-learn==1.7.2
+numpy==2.3.5
+pandas==2.3.3
+scipy==1.16.3
+joblib==1.5.2
+threadpoolctl==3.6.0
+python-dateutil==2.9.0.post0
+pytz==2025.2
+six==1.17.0

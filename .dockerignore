@@ -1,0 +1,21 @@
+.git/
+.github/
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.idea/
+.vscode/
+
+# Never bake secrets or personal data into an image.
+.env
+.env.*
+!.env.example
+data.csv
+*.sqlite3
+
+staticfiles/
+htmlcov/
+.coverage
+docs/

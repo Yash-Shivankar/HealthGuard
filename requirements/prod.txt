@@ -1,0 +1,5 @@
+# Production dependencies.
+-r base.txt
+
+# Add the WSGI/ASGI server and error tracking when the deploy target is
+# chosen (AUDIT Phase 8). Deliberately not guessed at here.
