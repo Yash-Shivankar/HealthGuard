@@ -1,0 +1,59 @@
+{% load static %}<!DOCTYPE html>
+{% comment %}
+Single base template.  Each of the four pages previously re-declared its own
+<head>, fonts, Bootstrap and icons, so changing the nav meant editing four
+files, and home.html loaded Bootstrap twice - once vendored, once from a CDN
+(AUDIT 3, P3).  Everything is vendored here: the vendor/ tree was already in
+the repo and unused, and dropping the CDNs removes a supply-chain surface.
+{% endcomment %}
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}HealthGuard{% endblock %}</title>
+  <meta name="description" content="{% block description %}HealthGuard is a symptom checker that suggests possible conditions and precautions. It is not a diagnosis and does not replace a doctor.{% endblock %}">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="{% static 'media/favicon.png' %}">
+  <link href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'style.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <a class="visually-hidden-focusable skip-link" href="#main-content">Skip to main content</a>
+
+  <header id="header" class="d-flex align-items-center">
+    <div class="container d-flex align-items-center justify-content-between">
+      <div class="logo">
+        <h1 class="h4 mb-0"><a href="{% url 'home' %}">Health Guard</a></h1>
+      </div>
+      <nav aria-label="Main navigation">
+        <a class="nav-link-inline" href="{% url 'symptoms' %}">Symptom check</a>
+        <a class="nav-link-inline" href="{% url 'privacy' %}">Privacy</a>
+      </nav>
+    </div>
+  </header>
+
+  {% block disclaimer %}
+    {% include "partials/_disclaimer.html" %}
+  {% endblock %}
+
+  <main id="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer id="footer">
+    <div class="container footer-bottom clearfix">
+      <div class="copyright">
+        &copy; Copyright <strong><span>HealthGuard</span></strong>. All Rights Reserved
+      </div>
+      <div class="credits">
+        <a href="{% url 'privacy' %}">Privacy &amp; consent</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

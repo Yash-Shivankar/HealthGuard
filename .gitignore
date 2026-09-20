@@ -1,0 +1,40 @@
+# ---- Secrets & environment -------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# ---- Personal data (AUDIT §2.1 — never commit PII again) --------------------
+data.csv
+*.sqlite3
+*.sqlite3-journal
+
+# ---- Python ----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# ---- Virtualenvs -----------------------------------------------------------
+venv/
+.venv/
+env/
+
+# ---- Tooling ---------------------------------------------------------------
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# ---- Test & coverage -------------------------------------------------------
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# ---- Django ----------------------------------------------------------------
+/staticfiles/
+/media_root/
+*.log

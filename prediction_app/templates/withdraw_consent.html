@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Withdraw consent &mdash; HealthGuard{% endblock %}
+
+{% block content %}
+<div class="container form-container">
+  <h2>Withdraw consent</h2>
+
+  {% if record %}
+    <p>
+      This will permanently delete the details you gave us: your name, mobile
+      number, age, height and weight. It cannot be undone.
+    </p>
+    <p class="text-muted">
+      Record for <strong>{{ record.name }}</strong> ({{ record.masked_contact }}),
+      created {{ record.created_at }}.
+    </p>
+    <form method="post" action="{% url 'withdraw_consent' %}">
+      {% csrf_token %}
+      {# Neutral, not red: red is reserved for clinical danger (AUDIT 8.3). #}
+      <button type="submit" class="btn-neutral-action">
+        Withdraw consent and delete my details
+      </button>
+    </form>
+  {% else %}
+    <p>
+      We have no record associated with this browser session, so there is
+      nothing to withdraw here.
+    </p>
+    <p>
+      If you gave your details on another device or an earlier visit, contact
+      the HealthGuard team and we will handle the request.
+    </p>
+    <a href="{% url 'home' %}" class="btn-primary-action">Back to home</a>
+  {% endif %}
+</div>
+{% endblock %}

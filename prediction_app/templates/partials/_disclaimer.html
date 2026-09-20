@@ -1,0 +1,23 @@
+{% comment %}
+The medical disclaimer.  A search of every template for "disclaimer", "consent",
+"privacy policy", "not a substitute" or "consult a doctor" previously returned
+zero matches (AUDIT 2.3).
+
+It sits in base.html so it cannot be forgotten on a new page, and it is a
+<section role="note"> rather than a dismissible alert: a disclaimer the user
+can close is a disclaimer that was not shown.
+{% endcomment %}
+<section class="disclaimer-banner" role="note" aria-label="Medical disclaimer">
+  <div class="container d-flex align-items-start gap-2">
+    <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+    <p class="mb-0">
+      <strong>This is not a diagnosis.</strong> HealthGuard suggests possible
+      conditions from the symptoms you enter to help you decide whether to see
+      a doctor. It is not a substitute for professional medical advice,
+      diagnosis or treatment, and it does not recommend medicines.
+      <strong>If you think this is an emergency &mdash; chest pain, difficulty
+      breathing, severe bleeding, confusion or loss of consciousness &mdash;
+      contact emergency services now.</strong>
+    </p>
+  </div>
+</section>

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Temporarily unavailable &mdash; HealthGuard{% endblock %}
+
+{% block content %}
+{# Shown when the model artefact is missing or unreadable. Better a clear 503 #}
+{# than a stack trace, which is what DEBUG=True used to render (AUDIT 2.2).   #}
+<div class="container form-container">
+  <h2>The symptom checker is temporarily unavailable</h2>
+  <p>
+    Something on our side is not working, so we cannot run a check right now.
+    Please try again shortly.
+  </p>
+  <p>
+    <strong>If you need medical help now, contact a doctor or emergency
+    services &mdash; do not wait for this service.</strong>
+  </p>
+  <a href="{% url 'home' %}" class="btn-primary-action">Back to home</a>
+</div>
+{% endblock %}

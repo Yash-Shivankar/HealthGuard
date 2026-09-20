@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}HealthGuard &mdash; symptom checker{% endblock %}
+
+{% block content %}
+{% comment %}
+Fixes from the audit's P3 list: the hero logo referenced 'media/hero-Logo.png'
+against an actual Hero-Logo.png, which broke on any case-sensitive host (2.4);
+the logo linked to a dead "index.html" left over from the purchased template;
+every <img> had alt=""; and the team section carried five real names, photos
+and LinkedIn URLs, which is wrong for a product you intend to sell.
+{% endcomment %}
+<section id="hero">
+  <div class="hero-container">
+    <img src="{% static 'media/Hero-Logo.png' %}" class="hero-logo-img"
+         alt="HealthGuard logo" width="120" height="120">
+    <h1>Welcome to Health Guard</h1>
+    <h2>Understand your symptoms before you see a doctor.</h2>
+    <a href="#what-it-does" class="btn-get-started">Get started</a>
+  </div>
+</section>
+
+<section id="what-it-does" class="d-flex align-items-center hero-secondary"
+         style="background-image: url('{% static 'media/bg.jpg' %}');">
+  <div class="container text-center">
+    <h2>Check your symptoms</h2>
+    <p>
+      Tell us what you are experiencing and we will suggest what it might be,
+      how urgent it looks, and what precautions to take.
+    </p>
+    <a href="{% url 'register' %}" class="btn-primary-action">Start a check</a>
+  </div>
+</section>
+
+<section id="services" class="team">
+  <div class="container">
+    <div class="section-title">
+      <h2>What you get</h2>
+      <p>Possible conditions, ranked &mdash; plus precautions and home remedies.</p>
+    </div>
+
+    <div class="team-members">
+      <div class="member">
+        <div class="member-img">
+          <img src="{% static 'media/remedies.png' %}" class="img-fluid"
+               alt="Illustration of home remedies" width="100%">
+        </div>
+        <div class="member-info">
+          <h3 class="h5">Home remedies</h3>
+          <p>General self-care suggestions for common conditions.</p>
+        </div>
+      </div>
+      <div class="member">
+        <div class="member-img">
+          <img src="{% static 'media/precaution.png' %}" class="img-fluid"
+               alt="Illustration of precautions to take" width="100%">
+        </div>
+        <div class="member-info">
+          <h3 class="h5">Precautions</h3>
+          <p>What to do, and what to avoid, while you arrange to see a doctor.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how-it-works" class="how-it-works">
+  <div class="container">
+    <div class="section-title">
+      <h2>How it works, honestly</h2>
+    </div>
+    <ul class="honesty-list">
+      <li>
+        <strong>It suggests, it does not diagnose.</strong> You get a ranked
+        list of possibilities with a match score, never a single verdict.
+      </li>
+      <li>
+        <strong>It says when it does not know.</strong> If your symptoms do not
+        match anything it recognises, it tells you so and points you to a
+        doctor instead of guessing.
+      </li>
+      <li>
+        <strong>It will not suggest medicines.</strong> Only a registered
+        medical practitioner can prescribe.
+      </li>
+      <li>
+        <strong>You control your data.</strong> We tell you what we collect
+        before you enter it, and you can
+        <a href="{% url 'withdraw_consent' %}">withdraw consent</a> at any time.
+      </li>
+    </ul>
+  </div>
+</section>
+{% endblock %}

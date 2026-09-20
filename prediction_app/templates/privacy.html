@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy notice &mdash; HealthGuard{% endblock %}
+
+{% block content %}
+{% comment %}
+There was no privacy notice, consent notice or disclaimer anywhere in the
+project (AUDIT 2.3).  This page is the notice the consent tick on the intake
+form refers to, written against the DPDP Act 2023 and the DPDP Rules 2025
+obligations listed in AUDIT 4.1.
+
+It describes what the application does today.  Several obligations in that
+section - breach reporting, scheduled erasure with advance notice, a grievance
+SLA - need process and staffing behind them, not just copy, and are Phase 4
+work.  They are not claimed here, because claiming a control you do not have is
+worse than not having it.
+{% endcomment %}
+<div class="container form-container">
+  <h2>Privacy notice</h2>
+  <p class="text-muted">Version 2026-09-20.1</p>
+
+  <h3 class="h5">What we collect</h3>
+  <p>
+    When you start a symptom check we ask for your name, mobile number, age,
+    height and weight. When you use the checker we process the symptoms you
+    select and how long you have had them.
+  </p>
+
+  <h3 class="h5">Why we collect it</h3>
+  <p>
+    So that a clinician reviewing your symptom check has context about you.
+    Your name, age, height and weight are <strong>not</strong> used by the
+    symptom checker &mdash; it works from your symptoms only.
+  </p>
+
+  <h3 class="h5">What we do not do</h3>
+  <ul>
+    <li>We do not sell your data or share it for advertising.</li>
+    <li>We do not recommend, suggest or prescribe medicines.</li>
+    <li>We do not diagnose you.</li>
+  </ul>
+
+  <h3 class="h5">How long we keep it</h3>
+  <p>
+    Until you withdraw consent, or three years without any contact from you,
+    whichever comes first.
+  </p>
+
+  <h3 class="h5">Your choices</h3>
+  <p>
+    Giving your details is voluntary and you can
+    <a href="{% url 'withdraw_consent' %}">withdraw consent</a> at any time,
+    which deletes your record. Withdrawing is as easy as giving consent.
+  </p>
+
+  <h3 class="h5">Contact</h3>
+  <p>
+    For questions about your data, or to make a request about it, contact the
+    HealthGuard team. A named grievance contact and response times will be
+    published here before the service is offered to the public.
+  </p>
+
+  <h3 class="h5">About the symptom checker</h3>
+  <p>
+    The checker is a machine-learning model trained on a public symptom-disease
+    dataset. It outputs ranked possibilities with a match score, and declines
+    to answer when its confidence is too low. It is a triage aid, not a medical
+    device, and it is not a substitute for professional medical advice,
+    diagnosis or treatment.
+  </p>
+</div>
+{% endblock %}

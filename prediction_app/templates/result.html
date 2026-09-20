@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Your result &mdash; HealthGuard{% endblock %}
+
+{% block content %}
+<div class="container result-container">
+
+  {% comment %}
+  This page used to print "Disease: {{ result.disease }}" as bare fact, with no
+  confidence, no alternatives and nothing saying it was not a diagnosis.
+
+  That is both a product failure and a regulatory one: a definite diagnostic
+  output pushes the product toward being regulated medical device software,
+  whereas ranked possibilities with urgency guidance and an explicit "not a
+  diagnosis" keep it in the wellness/triage lane (AUDIT 4.3, 2.3).
+  {% endcomment %}
+
+  <div class="section-title">
+    <h2>What this might be</h2>
+    <p>
+      Based on {{ symptoms|length }} symptom{{ symptoms|pluralize }} over
+      {{ days }} day{{ days|pluralize }}.
+    </p>
+  </div>
+
+  <section class="urgency urgency--{{ urgency.level }}" role="note"
+           aria-labelledby="urgency-heading">
+    {% comment %}
+    Every urgency state carries an icon and a text label, never colour alone
+    (AUDIT 8.3).  Red is reserved for clinical danger and is not used for any
+    UI chrome anywhere in this app.
+    {% endcomment %}
+    <i class="bi {% if urgency.level == 'urgent' %}bi-exclamation-triangle-fill{% elif urgency.level == 'consult' %}bi-clock-fill{% else %}bi-check-circle-fill{% endif %}"
+       aria-hidden="true"></i>
+    <div>
+      <h3 id="urgency-heading" class="h5 mb-1">{{ urgency.label }}</h3>
+      <p class="mb-0">{{ urgency.advice }}</p>
+    </div>
+  </section>
+
+  {% if abstained %}
+    <section class="result-abstained">
+      <h3 class="h5">We are not confident enough to suggest a condition</h3>
+      <p>
+        The symptoms you selected do not closely match any pattern this checker
+        recognises. Rather than guess, we would rather tell you that plainly.
+      </p>
+      <p class="mb-0">
+        Please describe your symptoms to a doctor. You can also
+        <a href="{% url 'symptoms' %}">try again</a> and add any symptoms you
+        left out.
+      </p>
+    </section>
+
+  {% else %}
+    <section aria-labelledby="possibilities-heading">
+      <h3 id="possibilities-heading" class="h5">
+        Possible conditions, most likely first
+      </h3>
+      <p class="text-muted small">
+        These are possibilities ranked by how well your symptoms match, not a
+        diagnosis. Only a doctor can diagnose you. A match score says how
+        closely what you reported lines up with a known pattern &mdash; it is
+        not the chance that you have the condition.
+      </p>
+
+      <ol class="candidate-list">
+        {% for candidate in candidates %}
+          <li class="candidate{% if forloop.first %} candidate--top{% endif %}">
+            <div class="candidate__header">
+              <span class="candidate__name">{{ candidate.disease }}</span>
+              <span class="candidate__confidence">
+                {{ candidate.match_band }}
+                <span class="candidate__score">
+                  {{ candidate.confidence_percent }}% symptom match
+                </span>
+              </span>
+            </div>
+            {% comment %}
+            The bar is decorative; the percentage above is the real value, so
+            the information is never carried by the bar alone.
+            {% endcomment %}
+            <div class="candidate__bar" aria-hidden="true">
+              <span style="width: {{ candidate.confidence_percent }}%"></span>
+            </div>
+          </li>
+        {% endfor %}
+      </ol>
+    </section>
+
+    {% if description %}
+      <section aria-labelledby="about-heading">
+        <h3 id="about-heading" class="h5">About {{ top.disease }}</h3>
+        <p>{{ description }}</p>
+      </section>
+    {% endif %}
+
+    {% if precautions %}
+      <section aria-labelledby="precautions-heading">
+        <h3 id="precautions-heading" class="h5">Precautions</h3>
+        <ul>
+          {% for precaution in precautions %}<li>{{ precaution }}</li>{% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+
+    <section aria-labelledby="remedies-heading">
+      <h3 id="remedies-heading" class="h5">Home remedies</h3>
+      {% comment %}
+      remedies_for() always returns a list, including on a miss.  The old code
+      assigned a bare string when nothing was found and this loop iterated it
+      character by character, rendering 43 single-letter bullets on roughly a
+      third of all results (AUDIT 2.9).
+      {% endcomment %}
+      <ul>
+        {% for remedy in remedies %}<li>{{ remedy }}</li>{% endfor %}
+      </ul>
+      <p class="text-muted small mb-0">
+        General self-care suggestions only. HealthGuard does not recommend or
+        prescribe medicines.
+      </p>
+    </section>
+  {% endif %}
+
+  <section class="result-symptoms" aria-labelledby="entered-heading">
+    <h3 id="entered-heading" class="h6">What you told us</h3>
+    <ul class="symptom-chips">
+      {% for symptom in symptoms %}<li>{{ symptom }}</li>{% endfor %}
+    </ul>
+  </section>
+
+  <div class="result-actions">
+    <a href="{% url 'symptoms' %}" class="btn-primary-action">Check again</a>
+    <a href="{% url 'home' %}" class="btn-secondary-action">Back to home</a>
+  </div>
+</div>
+{% endblock %}

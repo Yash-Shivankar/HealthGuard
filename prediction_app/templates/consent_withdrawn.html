@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Consent withdrawn &mdash; HealthGuard{% endblock %}
+
+{% block content %}
+<div class="container form-container">
+  <h2>Consent withdrawn</h2>
+  <p>
+    Your consent has been withdrawn and your details are marked for deletion.
+    You can still use the symptom checker without giving any details.
+  </p>
+  <a href="{% url 'symptoms' %}" class="btn-primary-action">Use the symptom checker</a>
+</div>
+{% endblock %}

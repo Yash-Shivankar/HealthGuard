@@ -1,0 +1,913 @@
+/*--------------------------------------------------------------
+# Design tokens
+#
+# The brand green #7cc576 measures 2.08:1 against white, which fails WCAG 2.1
+# AA for every text size (AUDIT 8.3).  It is kept for decorative surfaces and
+# stepped down for anything readable:
+#
+#   --hg-primary-400  #7cc576  2.08:1  decorative fills only, never text
+#   --hg-primary-600  #16a34a  3.30:1  borders, icons, large text (>= 24px)
+#   --hg-primary-700  #15803d  5.02:1  body-size text and filled buttons
+#
+# Filled buttons use 700 rather than 600: white label text on 600 is 3.30:1,
+# which only passes for large text, and a button label is not large text.
+#
+# Red is reserved for clinical danger and is never used for UI chrome such as
+# delete or cancel.  Destructive actions are neutral grey with a confirmation
+# step (AUDIT 8.3).
+--------------------------------------------------------------*/
+:root {
+  --hg-primary-400: #7cc576;
+  --hg-primary-600: #16a34a;
+  --hg-primary-700: #15803d;
+  --hg-primary-050: #f0f9f0;
+
+  --hg-danger-600: #dc2626;   /* clinical danger only */
+  --hg-warning-600: #b45309;  /* urgent, non-emergency */
+  --hg-warning-050: #fffbeb;
+  --hg-info-700: #1d4ed8;
+  --hg-info-050: #eff6ff;
+
+  --hg-text: #1f2933;
+  --hg-text-muted: #52606d;
+  --hg-border: #d5dbe2;
+  --hg-surface: #ffffff;
+  --hg-surface-alt: #f5f7fa;
+}
+
+body {
+  font-family: "Open Sans", sans-serif;
+  color: #555555;
+}
+
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Montserrat", sans-serif;
+}
+
+/*--------------------------------------------------------------
+# Header
+--------------------------------------------------------------*/
+#header {
+  height: 70px;
+  transition: all 0.5s;
+  z-index: 997;
+  transition: all 0.5s;
+  margin: 10px;
+  background: #fff;
+  box-shadow: 0 4px 10px -3px hsla(0, 0%, 75%, 0.5);
+}
+
+#header .logo h1 {
+  margin-top: 20px;
+  line-height: 1;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  align-items: center;
+}
+
+#header .logo h1 a,
+#header .logo h1 a:hover {
+  color: #000000;
+  text-decoration: none;
+}
+
+
+@media (max-width: 992px) {
+  #header {
+    height: 70px;
+  }
+}
+
+.scrolled-offset {
+  margin-top: 90px;
+}
+
+@media (max-width: 992px) {
+  .scrolled-offset {
+    margin-top: 90px;
+  }
+}
+
+/*--------------------------------------------------------------
+# Navigation Menu
+--------------------------------------------------------------*/
+/**
+* Desktop Navigation
+*/
+.navbar {
+  padding: 0;
+}
+
+.navbar ul {
+  margin: 20px;
+  padding: 0;
+  display: flex;
+  list-style: none;
+  align-items: end;
+  justify-content:flex-end
+}
+
+.navbar li {
+  position: relative;
+}
+
+.navbar a,
+.navbar a:focus {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0 10px 30px;
+  font-size: 15px;
+  color: #151515;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: 0.3s;
+}
+
+.navbar a i,
+.navbar a:focus i {
+  font-size: 12px;
+  line-height: 0;
+  margin-left: 5px;
+}
+
+.navbar a:hover,
+.navbar .active,
+.navbar .active:focus,
+.navbar li:hover>a {
+  color: var(--hg-primary-700);
+}
+
+
+/**
+* Mobile Navigation
+*/
+.mobile-nav-toggle {
+  color: #151515;
+  font-size: 28px;
+  cursor: pointer;
+  display: none;
+  line-height: 0;
+  transition: 0.5s;
+}
+
+.mobile-nav-toggle.bi-x {
+  color: #fff;
+}
+
+@media (max-width: 991px) {
+  .mobile-nav-toggle {
+    display: block;
+  }
+
+  .navbar ul {
+    display: none;
+  }
+}
+
+.navbar-mobile {
+  position: fixed;
+  overflow: hidden;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  transition: 0.3s;
+  z-index: 999;
+}
+
+.navbar-mobile .mobile-nav-toggle {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+}
+
+.navbar-mobile ul {
+  display: block;
+  position: absolute;
+  top: 55px;
+  right: 15px;
+  bottom: 15px;
+  left: 15px;
+  padding: 10px 0;
+  background-color: #fff;
+  overflow-y: auto;
+  transition: 0.3s;
+}
+
+.navbar-mobile a,
+.navbar-mobile a:focus {
+  padding: 10px 20px;
+  font-size: 15px;
+  color: #151515;
+}
+
+.navbar-mobile a:hover,
+.navbar-mobile .active,
+.navbar-mobile li:hover>a {
+  color: var(--hg-primary-700);
+}
+
+.navbar-mobile .getstarted,
+.navbar-mobile .getstarted:focus {
+  margin: 15px;
+}
+
+
+
+/*--------------------------------------------------------------
+# Hero Section
+--------------------------------------------------------------*/
+#hero {
+  width: 100%;
+  height: 100vh;
+  background: url("../media/Hero-back.jpeg");
+  position: relative;
+}
+
+#hero .hero-container {
+  position: absolute;
+  bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+  padding: 0 15px;
+}
+
+#hero .hero-logo {
+  margin-bottom: 30px;
+}
+
+#hero h1 {
+  margin: 0 0 30px 0;
+  font-size: 48px;
+  font-weight: 500;
+  line-height: 56px;
+  color: #fff;
+}
+
+#hero h2 {
+  color: #aeaeae;
+  margin-bottom: 30px;
+  font-size: 14px;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+#hero .btn-get-started {
+  font-family: "Montserrat", sans-serif;
+  text-transform: uppercase;
+  font-weight: 400;
+  font-size: 16px;
+  letter-spacing: 1px;
+  display: inline-block;
+  padding: 14px 30px;
+  border-radius: 3px;
+  margin: 10px;
+  color: #fff;
+  background: var(--hg-primary-700);
+}
+
+#hero .btn-get-started:hover {
+  transition: 0.5s;
+  background: #fff;
+  color: var(--hg-primary-700);
+}
+
+@media (min-width: 1024px) {
+  #hero {
+    background-attachment: fixed;
+  }
+}
+
+@media (max-width: 768px) {
+  #hero h1 {
+    font-size: 28px;
+    line-height: 36px;
+  }
+
+  #hero h2 {
+    line-height: 22px;
+  }
+}
+
+
+/*--------------------------------------------------------------
+# Sections General
+--------------------------------------------------------------*/
+section {
+  padding: 60px 0;
+  overflow: hidden;
+}
+
+.section-bg {
+  background-color: whitesmoke;
+}
+
+.section-title {
+  text-align: center;
+  padding-bottom: 40px;
+}
+
+.section-title h2 {
+  font-size: 32px;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 15px;
+  padding-bottom: 0;
+  color: #151515;
+}
+
+.section-title p {
+  margin-bottom: 0;
+  color: #aeaeae;
+}
+
+/*--------------------------------------------------------------
+# Team
+--------------------------------------------------------------*/
+.team {
+  background: #fff;
+  padding: 60px 0;
+  margin: 20px
+}
+
+.team .container .team-members {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.team .container .team-members .member{
+ margin: 20px
+ border: 1px solid #000000;
+}
+
+.team .container .team-members .member-img {
+  position: relative;
+  overflow: hidden;
+  border-radius: 5px;
+  height: auto;
+}
+
+.team .container .team-members .member .member-info{
+ width: 350px
+}
+
+.team .container .team-members .member .member-info h4 {
+  font-weight: 700;
+  margin: 15px 0 5px 0;
+  font-size: 18px;
+}
+
+.team .container .team-members .member .member-info p {
+  font-style: italic;
+  font-size: 14px;
+  line-height: 26px;
+  color: #888888;
+}
+
+#team .btn {
+  font-family: "Montserrat", sans-serif;
+  text-transform: uppercase;
+  font-weight: 400;
+  font-size: 16px;
+  letter-spacing: 1px;
+  display: inline-block;
+  padding: 14px 30px;
+  border-radius: 3px;
+  margin: 10px;
+  color: #fff;
+  background: var(--hg-primary-700);
+}
+
+#team .btn-get-started:hover {
+  transition: 0.5s;
+  background: #fff;
+  color: var(--hg-primary-700);
+}
+
+/*--------------------------------------------------------------
+# Register
+--------------------------------------------------------------*/
+.form-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+input[type="text"],
+input[type="number"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+/*--------------------------------------------------------------
+# Footer
+--------------------------------------------------------------*/
+#footer {
+  background: url("../media/Hero-back.jpeg") center center no-repeat;
+  color: #fff;
+  font-size: 14px;
+  position: relative;
+}
+
+#footer::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1;
+}
+
+#footer .footer-bottom {
+  border-top: 1px solid #222222;
+  z-index: 2;
+  position: relative;
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+#footer .copyright {
+  text-align: center;
+}
+
+#footer .credits {
+  text-align: center;
+  font-size: 13px;
+  padding-top: 5px;
+}
+
+
+.swiper-button-container {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+.swiper-button-prev,
+.swiper-button-next {
+  background-color: rgba(255, 255, 255, 0.5);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.swiper-button-prev {
+  left: 0;
+}
+
+.swiper-button-next {
+  right: 0;
+}
+
+
+/*--------------------------------------------------------------
+# Audit fixes — components added with the Phase 0/1 work
+--------------------------------------------------------------*/
+
+/* Keyboard users need to be able to skip the header and disclaimer. */
+.skip-link {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  padding: 10px 16px;
+  background: var(--hg-primary-700);
+  color: #fff;
+}
+
+/* Visible focus everywhere. The purchased template had none. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--hg-primary-700);
+  outline-offset: 2px;
+}
+
+.nav-link-inline {
+  margin-left: 18px;
+  color: var(--hg-primary-700);
+  font-weight: 500;
+}
+
+/*--- Medical disclaimer -------------------------------------------------*/
+/* Informational blue, not red: this is a standing notice, not a red flag. */
+.disclaimer-banner {
+  background: var(--hg-info-050);
+  border-top: 1px solid var(--hg-border);
+  border-bottom: 1px solid var(--hg-border);
+  padding: 12px 0;
+  font-size: 0.9rem;
+  color: var(--hg-text);
+}
+
+.disclaimer-banner .bi {
+  color: var(--hg-info-700);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/*--- Consent notice -----------------------------------------------------*/
+.consent-notice {
+  background: var(--hg-surface-alt);
+  border: 1px solid var(--hg-border);
+  border-left: 4px solid var(--hg-primary-600);
+  border-radius: 4px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+}
+
+.consent-notice__list {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  font-size: 0.9rem;
+}
+
+.consent-notice__list dt {
+  font-weight: 600;
+  color: var(--hg-text-muted);
+}
+
+.consent-notice__list dd {
+  margin: 0;
+}
+
+@media (max-width: 575px) {
+  .consent-notice__list {
+    grid-template-columns: 1fr;
+  }
+  .consent-notice__list dd {
+    margin-bottom: 8px;
+  }
+}
+
+/*--- Forms --------------------------------------------------------------*/
+.form-group--error input,
+.form-group--error select {
+  border-color: var(--hg-warning-600);
+}
+
+.form-error {
+  display: block;
+  margin-top: 4px;
+  color: var(--hg-warning-600);
+  font-weight: 500;
+}
+
+.form-help {
+  display: block;
+  margin-top: 4px;
+  color: var(--hg-text-muted);
+}
+
+.form-errors {
+  background: var(--hg-warning-050);
+  border: 1px solid var(--hg-warning-600);
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+/*--- Buttons ------------------------------------------------------------*/
+.btn-primary-action,
+.btn-secondary-action,
+.btn-neutral-action {
+  display: inline-block;
+  padding: 12px 28px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  font-family: "Montserrat", sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-primary-action {
+  background: var(--hg-primary-700);
+  color: #fff;
+}
+
+.btn-primary-action:hover {
+  background: var(--hg-primary-600);
+  color: #fff;
+}
+
+.btn-primary-action:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.btn-secondary-action {
+  background: transparent;
+  border-color: var(--hg-primary-700);
+  color: var(--hg-primary-700);
+}
+
+/* Destructive, and deliberately not red — see the design tokens note. */
+.btn-neutral-action {
+  background: var(--hg-surface-alt);
+  border-color: var(--hg-text-muted);
+  color: var(--hg-text);
+}
+
+/*--- Symptom picker -----------------------------------------------------*/
+.symptom-filter {
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  border: 1px solid var(--hg-border);
+  border-radius: 4px;
+}
+
+.symptom-count {
+  margin: 0 0 8px;
+  font-size: 0.875rem;
+  color: var(--hg-text-muted);
+}
+
+.symptom-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 6px 16px;
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 12px;
+  border: 1px solid var(--hg-border);
+  border-radius: 4px;
+  background: var(--hg-surface);
+}
+
+.symptom-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.symptom-option[hidden] {
+  display: none;
+}
+
+.symptom-option label {
+  margin: 0;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.symptom-empty {
+  margin-top: 8px;
+  color: var(--hg-text-muted);
+}
+
+/*--- Result -------------------------------------------------------------*/
+.result-container {
+  padding: 32px 0 56px;
+}
+
+.result-container section {
+  margin-bottom: 28px;
+}
+
+/* Urgency states. Colour always accompanies an icon and a text label. */
+.urgency {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px 20px;
+  border-radius: 4px;
+  border-left: 4px solid;
+}
+
+.urgency .bi {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.urgency--urgent {
+  background: #fef2f2;
+  border-left-color: var(--hg-danger-600);
+}
+
+.urgency--urgent .bi {
+  color: var(--hg-danger-600);
+}
+
+.urgency--consult {
+  background: var(--hg-warning-050);
+  border-left-color: var(--hg-warning-600);
+}
+
+.urgency--consult .bi {
+  color: var(--hg-warning-600);
+}
+
+.urgency--routine,
+.urgency--unknown {
+  background: var(--hg-primary-050);
+  border-left-color: var(--hg-primary-600);
+}
+
+.urgency--routine .bi,
+.urgency--unknown .bi {
+  color: var(--hg-primary-700);
+}
+
+.result-abstained {
+  background: var(--hg-surface-alt);
+  border: 1px solid var(--hg-border);
+  border-radius: 4px;
+  padding: 20px 24px;
+}
+
+/*--- Ranked differential ------------------------------------------------*/
+.candidate-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.candidate {
+  padding: 12px 16px;
+  border: 1px solid var(--hg-border);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  background: var(--hg-surface);
+}
+
+.candidate--top {
+  border-color: var(--hg-primary-600);
+  background: var(--hg-primary-050);
+}
+
+.candidate__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.candidate__name {
+  font-weight: 600;
+}
+
+.candidate__confidence {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--hg-text);
+  white-space: nowrap;
+}
+
+/* The number is deliberately secondary to the band. See predictor.Candidate. */
+.candidate__score {
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--hg-text-muted);
+}
+
+.candidate__bar {
+  height: 6px;
+  margin-top: 8px;
+  background: var(--hg-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.candidate__bar span {
+  display: block;
+  height: 100%;
+  background: var(--hg-primary-600);
+}
+
+/*--- Entered symptoms ---------------------------------------------------*/
+.symptom-chips {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.symptom-chips li {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--hg-surface-alt);
+  border: 1px solid var(--hg-border);
+  font-size: 0.875rem;
+}
+
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+/*--- Home ---------------------------------------------------------------*/
+.hero-logo-img {
+  object-fit: contain;
+  margin-bottom: 16px;
+}
+
+.hero-secondary {
+  height: 420px;
+  background-size: cover;
+  background-position: center;
+}
+
+.hero-secondary .container {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 6px;
+  padding: 32px 24px;
+}
+
+.how-it-works {
+  padding: 48px 0;
+  background: var(--hg-surface-alt);
+}
+
+.honesty-list {
+  list-style: none;
+  padding: 0;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.honesty-list li {
+  padding: 12px 0 12px 28px;
+  position: relative;
+  border-bottom: 1px solid var(--hg-border);
+}
+
+.honesty-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 19px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--hg-primary-600);
+}

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Your details &mdash; HealthGuard{% endblock %}
+
+{% block content %}
+<div class="container form-container">
+  <h2>Enter your information</h2>
+
+  {% comment %}
+  The itemised consent notice.  The DPDP Rules 2025 require notice that states
+  what is collected, why, for how long, and how to withdraw - specifically, and
+  before collection, not buried in a policy page (AUDIT 4.1, 2.3).
+  {% endcomment %}
+  <section class="consent-notice" aria-labelledby="consent-heading">
+    <h3 id="consent-heading" class="h6">Before you fill this in</h3>
+    <dl class="consent-notice__list">
+      <dt>What we collect</dt>
+      <dd>Your name, mobile number, age, height and weight.</dd>
+
+      <dt>Why</dt>
+      <dd>
+        So a clinician reviewing your symptom check has context. These details
+        are <strong>not</strong> used by the symptom checker itself &mdash; it
+        works from your symptoms only.
+      </dd>
+
+      <dt>Who sees it</dt>
+      <dd>HealthGuard staff. We do not sell it or share it for advertising.</dd>
+
+      <dt>How long we keep it</dt>
+      <dd>Until you withdraw consent, or three years without contact from you.</dd>
+
+      <dt>Withdrawing</dt>
+      <dd>
+        You can withdraw at any time from the
+        <a href="{% url 'withdraw_consent' %}">withdraw consent</a> page, and we
+        will delete your record. Withdrawing is as easy as giving consent.
+      </dd>
+    </dl>
+    <p class="mb-0 small">
+      Full detail is in the <a href="{% url 'privacy' %}">privacy notice</a>.
+    </p>
+  </section>
+
+  {% if form.non_field_errors %}
+    <div class="form-errors" role="alert">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <form id="registrationForm" action="{% url 'register' %}" method="post" novalidate>
+    {% csrf_token %}
+
+    {% comment %}
+    Errors are rendered inline and associated with their field. The old page
+    reported them through alert() in JavaScript, which a screen reader handles
+    badly and curl skips entirely (AUDIT 3, P3 accessibility; 2.7 validation).
+    {% endcomment %}
+    {% for field in form %}
+      <div class="form-group{% if field.errors %} form-group--error{% endif %}">
+        <label for="{{ field.id_for_label }}">
+          {{ field.label }}{% if field.field.required %}<span aria-hidden="true">*</span>{% endif %}
+        </label>
+        {{ field }}
+        {% if field.help_text %}
+          <small class="form-help">{{ field.help_text }}</small>
+        {% endif %}
+        {% for error in field.errors %}
+          <small class="form-error" role="alert">{{ error }}</small>
+        {% endfor %}
+      </div>
+    {% endfor %}
+
+    <button type="submit" class="btn-primary-action">Continue to symptoms</button>
+  </form>
+</div>
+{% endblock %}

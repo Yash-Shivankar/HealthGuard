@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Symptom check &mdash; HealthGuard{% endblock %}
+
+{% block content %}
+<div class="container form-container">
+  <h2>What are you experiencing?</h2>
+  <p class="text-muted">
+    Pick everything that applies. The more accurate your selection, the more
+    useful the result.
+  </p>
+
+  <form action="{% url 'predict' %}" method="post" novalidate id="symptom-form">
+    {% csrf_token %}
+
+    {% comment %}
+    Select2 and jQuery, both from CDNs, are gone. This is a searchable
+    checkbox list in plain JavaScript: one fewer supply-chain surface, it
+    works without JavaScript at all, and checkboxes announce their state to a
+    screen reader where a Select2 combobox does not (AUDIT 3, P3).
+    {% endcomment %}
+    <fieldset class="form-group{% if form.symptoms.errors %} form-group--error{% endif %}">
+      <legend>{{ form.symptoms.label }}</legend>
+
+      {% for error in form.symptoms.errors %}
+        <small class="form-error" role="alert">{{ error }}</small>
+      {% endfor %}
+
+      <label for="symptom-filter" class="visually-hidden">Filter symptoms</label>
+      <input type="search" id="symptom-filter" class="symptom-filter"
+             placeholder="Type to filter symptoms&hellip;" autocomplete="off">
+
+      <p class="symptom-count" aria-live="polite">
+        <span id="symptom-selected-count">0</span> selected
+      </p>
+
+      <div class="symptom-grid" role="group" aria-labelledby="symptom-filter">
+        {% for value, label in form.symptoms.field.choices %}
+          <div class="symptom-option" data-label="{{ label|lower }}">
+            <input type="checkbox" name="symptoms" value="{{ value }}"
+                   id="symptom-{{ forloop.counter }}"
+                   {% if value in form.symptoms.value|default:"" %}checked{% endif %}>
+            <label for="symptom-{{ forloop.counter }}">{{ label }}</label>
+          </div>
+        {% endfor %}
+      </div>
+      <p class="symptom-empty" id="symptom-no-match" hidden>No symptoms match that search.</p>
+    </fieldset>
+
+    <div class="form-group{% if form.days.errors %} form-group--error{% endif %}">
+      <label for="{{ form.days.id_for_label }}">{{ form.days.label }}</label>
+      {{ form.days }}
+      {% for error in form.days.errors %}
+        <small class="form-error" role="alert">{{ error }}</small>
+      {% endfor %}
+    </div>
+
+    <button type="submit" class="btn-primary-action" id="symptom-submit">
+      Check symptoms
+    </button>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    'use strict';
+    var filter  = document.getElementById('symptom-filter');
+    var options = Array.prototype.slice.call(document.querySelectorAll('.symptom-option'));
+    var counter = document.getElementById('symptom-selected-count');
+    var noMatch = document.getElementById('symptom-no-match');
+    var form    = document.getElementById('symptom-form');
+    var submit  = document.getElementById('symptom-submit');
+
+    function updateCount() {
+      counter.textContent = options.filter(function (option) {
+        return option.querySelector('input').checked;
+      }).length;
+    }
+
+    filter.addEventListener('input', function () {
+      var term = filter.value.trim().toLowerCase();
+      var visible = 0;
+      options.forEach(function (option) {
+        var match = !term || option.dataset.label.indexOf(term) !== -1;
+        option.hidden = !match;
+        if (match) { visible += 1; }
+      });
+      noMatch.hidden = visible !== 0;
+    });
+
+    form.addEventListener('change', updateCount);
+
+    // A prediction is fast now that the model is cached, but the button should
+    // still say something rather than look dead on a slow connection
+    // (AUDIT 3, P3 "no loading state").
+    form.addEventListener('submit', function () {
+      submit.disabled = true;
+      submit.textContent = 'Checking…';
+    });
+
+    updateCount();
+  })();
+</script>
+{% endblock %}
