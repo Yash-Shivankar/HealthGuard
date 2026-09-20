@@ -90,11 +90,16 @@ measurable.
 
 ## Before this goes public
 
-- [ ] **Purge `data.csv` from git history.** 40 real names and mobile numbers
-      are in the pushed history. The repo is currently **private with 0 forks**,
-      so there is no live exposure — but this must happen before it is ever
-      made public. See `docs/HISTORY.md`.
-- [ ] Rotate `SECRET_KEY` (the old one is in git history).
+- [x] ~~Purge `data.csv` from git history.~~ Done — `git filter-repo` stripped
+      it from all commits, and the force-pushed history verifies clean from a
+      fresh clone.
+- [ ] **Ask GitHub Support to garbage-collect unreachable objects** for this
+      repo. A force-push does not delete them: the pre-purge commit `76bfb48`
+      is still fetchable by SHA, so the 40 records remain retrievable by anyone
+      with repo access who knows it. **Do not make this repo public until that
+      is confirmed done.**
+- [x] ~~Rotate `SECRET_KEY`.~~ Done — a fresh key is in `.env` (gitignored) and
+      the old one is redacted throughout history.
 - [ ] Get clinical sign-off on the urgency thresholds in
       `prediction_app/services/triage.py`. They are inherited magic numbers
       with no clinical basis, documented as such in the module.
