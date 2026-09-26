@@ -1,12 +1,14 @@
 {
   "app": {
     "name": "HealthGuard",
-    "tagline": "Understand your symptoms before you see a doctor"
+    "tagline": "Understand your symptoms before you see a doctor",
+    "skipToContent": "Skip to main content"
   },
   "disclaimer": {
     "heading": "This is not a diagnosis.",
     "body": "HealthGuard suggests possible conditions from the symptoms you enter, to help you decide whether to see a doctor. It is not a substitute for professional medical advice, diagnosis or treatment, and it does not recommend medicines.",
-    "emergency": "If you think this is an emergency — chest pain, difficulty breathing, severe bleeding, confusion or loss of consciousness — contact emergency services now."
+    "emergency": "If you think this is an emergency — chest pain, difficulty breathing, severe bleeding, confusion or loss of consciousness — contact emergency services now.",
+    "call": "Emergency? Call 112"
   },
   "nav": {
     "symptomCheck": "Symptom check",
@@ -16,7 +18,13 @@
     "patients": "Patients",
     "reviewQueue": "Review queue",
     "language": "Language",
-    "describe": "Describe the problem"
+    "describe": "Describe the problem",
+    "home": "Home",
+    "theme": "Switch to {{mode}} theme",
+    "themeLight": "light",
+    "themeDark": "dark",
+    "forClinics": "For clinics",
+    "menu": "Menu"
   },
   "intake": {
     "title": "Your details",
@@ -36,7 +44,12 @@
     "weight": "Weight (kg)",
     "consent": "I have read the notice above and agree to my details being used for this symptom check.",
     "submit": "Continue to symptoms",
-    "skip": "Skip — check symptoms without giving details"
+    "skip": "Skip — check symptoms without giving details",
+    "optionalBadge": "Optional: you can skip this step",
+    "errorContact": "Enter a 10-digit Indian mobile number, starting with 6, 7, 8 or 9.",
+    "errorAge": "Enter an age between 0 and 120.",
+    "errorConsent": "Tick the box to agree, or skip this step below.",
+    "contactHint": "We never show your full number to anyone."
   },
   "symptoms": {
     "title": "What are you experiencing?",
@@ -48,7 +61,15 @@
     "submit": "Check symptoms",
     "checking": "Checking…",
     "errorNoneSelected": "Select at least one symptom so we have something to check.",
-    "errorDays": "Tell us how many days you have had these symptoms."
+    "errorDays": "Tell us how many days you have had these symptoms.",
+    "yourSymptoms": "Your symptoms",
+    "clearAll": "Clear all",
+    "remove": "Remove {{symptom}}",
+    "emptySelection": "Nothing selected yet. Tap symptoms below to add them.",
+    "fewerDays": "One day fewer",
+    "moreDays": "One day more",
+    "fromDescription": "We ticked these from your description. Check them and add anything that is missing.",
+    "allSymptoms": "All symptoms"
   },
   "result": {
     "title": "What this might be",
@@ -68,7 +89,9 @@
     "basedOnSymptoms_one": "{{count}} symptom",
     "basedOnSymptoms_other": "{{count}} symptoms",
     "basedOnDays_one": "{{count}} day",
-    "basedOnDays_other": "{{count}} days"
+    "basedOnDays_other": "{{count}} days",
+    "print": "Print for your doctor",
+    "nextStep": "Your next step"
   },
   "clinic": {
     "signInTitle": "Staff sign-in",
@@ -97,7 +120,14 @@
     "columnWhen": "When",
     "columnReview": "Review",
     "anonymous": "Anonymous",
-    "abstained": "No condition named"
+    "abstained": "No condition named",
+    "signInLead": "For clinic staff. Patients never need an account.",
+    "signInPanelTitle": "Your front desk, triaged before the patient reaches it.",
+    "sessionNote": "Staff sessions end after 15 minutes without activity.",
+    "queueWaiting_one": "{{count}} waiting",
+    "queueWaiting_other": "{{count}} waiting",
+    "patientsCount_one": "{{count}} patient",
+    "patientsCount_other": "{{count}} patients"
   },
   "common": {
     "loading": "Loading…",
@@ -127,6 +157,69 @@
     "aiNotice": "This reading was done automatically and is not a diagnosis. A doctor checks it before it becomes part of your record.",
     "simulatedNotice": "Voice input is not connected yet, so this text was an example rather than your recording.",
     "errorEmpty": "Please describe the problem first.",
-    "errorFailed": "We could not read that just now. Please try again, or pick from the list."
+    "errorFailed": "We could not read that just now. Please try again, or pick from the list.",
+    "tryExample": "Try an example",
+    "or": "or"
+  },
+  "flow": {
+    "label": "Your progress",
+    "details": "Your details",
+    "symptoms": "Symptoms",
+    "result": "Result",
+    "optional": "optional"
+  },
+  "home": {
+    "eyebrow": "Free · Private · In your language",
+    "title": "Understand your symptoms.",
+    "titleAccent": "Know how soon to act.",
+    "lead": "Tell us how you feel in English, हिंदी or मराठी. HealthGuard suggests what it might be and how urgently you should see a doctor.",
+    "startDescribe": "Describe in my own words",
+    "startDescribeHint": "Type how you feel, in any of three languages",
+    "startPick": "Pick from a symptom list",
+    "startPickHint": "Tick what you are experiencing",
+    "trustNotDiagnosis": "A guide, not a diagnosis",
+    "trustNoMedicines": "Never suggests medicines",
+    "trustPrivacy": "You decide what to share",
+    "trustLanguages": "English · हिंदी · मराठी",
+    "previewLabel": "Example result",
+    "previewUrgency": "See a doctor in the next 1–2 days",
+    "previewUrgencyHint": "Worth a check-up, not an emergency.",
+    "previewCondition1": "Common cold",
+    "previewCondition2": "Allergy",
+    "previewCondition3": "Bronchial asthma",
+    "previewStrong": "Strong match",
+    "previewPossible": "Possible match",
+    "previewWeak": "Weak match",
+    "howTitle": "Three calm steps",
+    "howLead": "About two minutes. No account needed.",
+    "step1Title": "Tell us what you feel",
+    "step1Body": "Describe it in your own words, or tick symptoms from the list.",
+    "step2Title": "See ranked possibilities",
+    "step2Body": "Conditions that fit your symptoms, strongest first, with how closely each one matches.",
+    "step3Title": "Know your next step",
+    "step3Body": "Clear advice on how soon to see a doctor, and safe self-care while you wait.",
+    "honestTitle": "How it works, honestly",
+    "honestLead": "Health tools earn trust by being clear about their limits. Here are ours.",
+    "honest1Title": "It suggests, it does not diagnose.",
+    "honest1Body": "You get a ranked list of possibilities with a match score, never a single verdict.",
+    "honest2Title": "It says when it does not know.",
+    "honest2Body": "If your symptoms do not match anything it recognises, it tells you so and points you to a doctor instead of guessing.",
+    "honest3Title": "It will not suggest medicines.",
+    "honest3Body": "Only a registered medical practitioner can prescribe.",
+    "honest4Title": "You control your data.",
+    "honest4Body": "We tell you what we collect before you enter it, you can skip it entirely, and you can withdraw at any time.",
+    "clinicEyebrow": "For clinics",
+    "clinicTitle": "Know why each patient is here before they reach your desk.",
+    "clinicBody": "Patients describe their symptoms in their own language while they wait. Your doctors get an urgency-sorted queue of AI drafts to review and sign off.",
+    "clinicPoint1": "Urgency-sorted review queue",
+    "clinicPoint2": "Every AI draft needs a doctor's sign-off",
+    "clinicPoint3": "Designed around India's DPDP Act",
+    "clinicCta": "Staff sign-in"
+  },
+  "footer": {
+    "emergency": "In an emergency call 112 · Ambulance 108",
+    "madeIn": "Made in India, for Indian clinics.",
+    "patients": "For patients",
+    "clinics": "For clinics"
   }
 }

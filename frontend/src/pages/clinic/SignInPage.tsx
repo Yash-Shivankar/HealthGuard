@@ -6,11 +6,12 @@
  * Different surfaces, different risk.
  */
 
+import { CircleCheck, Lock, LogIn } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate } from 'react-router-dom';
 
-import { Alert, Card, Field } from '../../components/common';
+import { Alert, Card, Field, LogoMark } from '../../components/common';
 import { useSession } from '../../services/store/SessionContext';
 
 export function SignInPage() {
@@ -43,11 +44,26 @@ export function SignInPage() {
   }
 
   return (
-    <div className="hg-narrow">
-      <h1>{t('clinic.signInTitle')}</h1>
-      {failed ? <Alert>{t('clinic.signInFailed')}</Alert> : null}
+    <div className="hg-auth">
+      <section className="hg-auth__panel" aria-hidden="true">
+        <LogoMark size={44} />
+        <p className="hg-eyebrow hg-eyebrow--light">{t('home.clinicEyebrow')}</p>
+        <p className="hg-auth__title">{t('clinic.signInPanelTitle')}</p>
+        <ul>
+          {[t('home.clinicPoint1'), t('home.clinicPoint2'), t('home.clinicPoint3')].map((point) => (
+            <li key={point}>
+              <CircleCheck size={18} />
+              {point}
+            </li>
+          ))}
+        </ul>
+      </section>
 
-      <Card>
+      <Card className="hg-auth__card">
+        <h1>{t('clinic.signInTitle')}</h1>
+        <p className="hg-muted">{t('clinic.signInLead')}</p>
+        {failed ? <Alert>{t('clinic.signInFailed')}</Alert> : null}
+
         <form onSubmit={submit} noValidate>
           <Field
             id="username"
@@ -66,10 +82,19 @@ export function SignInPage() {
             required
             onChange={(event) => setPassword(event.target.value)}
           />
-          <button type="submit" className="hg-btn hg-btn--primary" disabled={busy}>
+          <button
+            type="submit"
+            className="hg-btn hg-btn--primary hg-btn--lg hg-btn--block"
+            disabled={busy}
+          >
+            <LogIn size={18} aria-hidden="true" />
             {busy ? t('clinic.signingIn') : t('clinic.signIn')}
           </button>
         </form>
+        <p className="hg-auth__note">
+          <Lock size={14} aria-hidden="true" />
+          {t('clinic.sessionNote')}
+        </p>
       </Card>
     </div>
   );

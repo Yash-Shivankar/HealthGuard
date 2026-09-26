@@ -1,77 +1,195 @@
 /**
- * Design tokens (AUDIT 8.3).
+ * Design tokens — "Healing Teal" system (UI redesign, 26 Sep 2026).
  *
- * The brand green #7cc576 measures 2.08:1 against white and fails WCAG 2.1 AA
- * for every text size. It survives here only as --hg-primary-400, for
- * decorative surfaces. Anything readable steps down:
+ * WHY TEAL. Blue is the default of Indian health brands (Practo, Apollo, most
+ * hospital logos) and reads as institutional; plain green reads as finance or
+ * "success". Teal sits between the two: it keeps blue's trust and green's sense
+ * of recovery, and it sets the product apart on a clinic's reception screen.
+ * The old brand green #7cc576 lives on as the lineage of this family.
  *
- *   --hg-primary-600  #16a34a  3.30:1  borders, icons, large text (>= 24px)
- *   --hg-primary-700  #15803d  5.02:1  body text and filled buttons
+ * WHY A WARM ACCENT. "Sunrise" peach is the hope colour: hero backgrounds and
+ * illustration only. It is NEVER used for status, text or buttons, because it
+ * sits too close to the amber "consult" state to carry meaning safely.
  *
- * Filled buttons use 700, not 600: white label text on 600 is 3.30:1, which
- * only passes for large text, and a button label is not large text.
+ * CONTRAST (WCAG 2.1, measured, not estimated):
+ *   white on --hg-primary-700  #0b6b5f   6.40:1  filled buttons, AA any size
+ *   --hg-primary-700 on white            6.40:1  links, body-size text
+ *   --hg-primary-600 #0e8575 on white    4.54:1  icons, borders, large text
+ *   --hg-text-muted on --hg-bg           5.82:1
+ *   --hg-danger-700 on --hg-danger-50    5.91:1  (the old #dc2626 was 4.41:1 —
+ *                                                 below AA for body text)
+ *   --hg-warning-700 on --hg-warning-50  4.75:1
+ *   --hg-ai-600 on --hg-ai-50            6.48:1
+ *   dark: primary #5eead4 on surface     10.8:1; muted 7.3:1
  *
- * RED IS RESERVED FOR CLINICAL DANGER. Never for delete, cancel or any UI
- * chrome. If red is spent on destructive buttons it is worthless when a
- * red-flag symptom appears, so destructive actions are neutral with a
- * confirmation step.
+ * RULES CARRIED OVER FROM AUDIT 8.3 — unchanged by the redesign:
+ *   - RED IS RESERVED FOR CLINICAL DANGER. Never delete/cancel/chrome.
+ *   - Status is never colour alone: always icon + text label.
+ *   - AI-generated, unreviewed output has its own violet state (TPG 2020).
  */
 
 :root {
-  /* Brand */
-  --hg-primary-50: #f0f9f0;
-  --hg-primary-100: #dcf0db;
-  --hg-primary-400: #7cc576; /* brand; decorative fills only, never text */
-  --hg-primary-600: #16a34a;
-  --hg-primary-700: #15803d;
-  --hg-primary-800: #116632;
+  color-scheme: light;
+
+  /* Brand — Healing Teal */
+  --hg-primary-50: #f0fbf9;
+  --hg-primary-100: #d3f4ee;
+  --hg-primary-200: #a6e8dc;
+  --hg-primary-300: #6fd4c3;
+  --hg-primary-400: #2fb9a4; /* decorative only, never text */
+  --hg-primary-600: #0e8575;
+  --hg-primary-700: #0b6b5f;
+  --hg-primary-800: #0a564d;
+  --hg-primary-900: #083f39;
+  --hg-on-primary: #ffffff;
+
+  /* Hope accent — decorative surfaces only (see header) */
+  --hg-sunrise-100: #fff1dc;
+  --hg-sunrise-200: #ffe2b8;
+  --hg-sunrise-300: #ffc98a;
 
   /* Clinical status. Each is always paired with an icon and a text label. */
-  --hg-danger-600: #dc2626; /* clinical danger only */
+  --hg-danger-700: #b91c1c; /* clinical danger only */
+  --hg-danger-600: #dc2626;
   --hg-danger-50: #fef2f2;
-  --hg-warning-600: #b45309; /* urgent, non-emergency */
-  --hg-warning-50: #fffbeb;
+  --hg-danger-200: #fecaca;
+  --hg-warning-700: #b45309; /* consult soon, non-emergency */
+  --hg-warning-50: #fff8eb;
+  --hg-warning-200: #fde2b0;
   --hg-info-700: #1d4ed8;
   --hg-info-50: #eff6ff;
+  --hg-info-200: #cfe0ff;
   /* AI-generated and unreviewed. A TPG 2020 control, not decoration. */
-  --hg-ai-600: #7c3aed;
+  --hg-ai-600: #6d28d9;
   --hg-ai-50: #f5f3ff;
+  --hg-ai-200: #ddd6fe;
 
-  /* Neutrals */
-  --hg-text: #1f2933;
-  --hg-text-muted: #52606d;
-  --hg-border: #d5dbe2;
+  /* Neutrals — a faint teal cast so white cards feel calm, not clinical */
+  --hg-text: #0c2733;
+  --hg-text-muted: #4b6472;
+  --hg-border: #dbe5e8;
+  --hg-border-strong: #b9c9ce;
+  --hg-bg: #f3f8f8;
   --hg-surface: #ffffff;
-  --hg-surface-alt: #f5f7fa;
+  --hg-surface-alt: #eef4f5;
+  --hg-header-bg: rgba(255, 255, 255, 0.82);
 
-  --hg-radius: 6px;
+  /* Shape & depth */
+  --hg-radius-sm: 8px;
+  --hg-radius: 12px;
+  --hg-radius-lg: 20px;
+  --hg-radius-xl: 28px;
+  --hg-shadow-sm: 0 1px 2px rgba(12, 39, 51, 0.06);
+  --hg-shadow: 0 1px 2px rgba(12, 39, 51, 0.05), 0 8px 24px -8px rgba(12, 39, 51, 0.12);
+  --hg-shadow-lg: 0 2px 4px rgba(12, 39, 51, 0.04), 0 24px 48px -16px rgba(11, 107, 95, 0.28);
+  --hg-ring: 0 0 0 4px rgba(14, 133, 117, 0.22);
+
   --hg-gap: 16px;
+  --hg-container: 1160px;
 
-  /* A monospace face for anything read digit by digit or compared by eye:
-     ABHA numbers, patient ids, model fingerprints (AUDIT 8.3). */
+  /* Monospace for anything read digit by digit: ABHA numbers, patient ids,
+     masked contacts, model fingerprints (AUDIT 8.3). */
   --hg-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
-  --hg-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Latin text uses Inter / Plus Jakarta; Devanagari falls through to Noto
+     Sans Devanagari, so Hindi and Marathi get a designed face instead of
+     whatever the OS happens to have. All three are self-hosted: a health
+     app should not report every visitor's IP to a font CDN (DPDP). */
+  --hg-sans: 'Inter Variable', 'Noto Sans Devanagari Variable', system-ui, -apple-system,
+    'Segoe UI', Roboto, sans-serif;
+  --hg-display: 'Plus Jakarta Sans Variable', 'Noto Sans Devanagari Variable', 'Inter Variable',
+    system-ui, sans-serif;
+
+  --hg-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+/* Dark theme. Defined twice — once for the OS preference, once for an explicit
+   choice from the theme toggle — so both routes give identical values. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --hg-text: #e4e7eb;
-    --hg-text-muted: #9aa5b1;
-    --hg-border: #3e4c59;
-    --hg-surface: #1f2933;
-    --hg-surface-alt: #323f4b;
+    color-scheme: dark;
+    --hg-text: #e6f0f2;
+    --hg-text-muted: #9db3bc;
+    --hg-border: #22404a;
+    --hg-border-strong: #33555f;
+    --hg-bg: #0b1a20;
+    --hg-surface: #11242c;
+    --hg-surface-alt: #173039;
+    --hg-header-bg: rgba(11, 26, 32, 0.8);
 
-    /* Re-checked on a dark surface: amber-600 loses contrast there and steps
-       up, exactly as AUDIT 8.3 warns. */
-    --hg-warning-600: #fbbf24;
+    --hg-primary-50: #0f2e2c;
+    --hg-primary-100: #134039;
+    --hg-primary-200: #1b5a50;
+    --hg-primary-300: #2c8a7a;
+    --hg-primary-600: #2dd4bf;
+    --hg-primary-700: #5eead4;
+    --hg-primary-800: #99f6e4;
+    --hg-on-primary: #0b1a20;
+
+    --hg-sunrise-100: #2a2217;
+    --hg-sunrise-200: #3a2c18;
+    --hg-sunrise-300: #5a4020;
+
+    --hg-danger-700: #f87171;
     --hg-danger-600: #f87171;
-    --hg-ai-600: #a78bfa;
-    --hg-primary-600: #4ade80;
-    --hg-primary-700: #86efac;
-    --hg-primary-50: #14261a;
     --hg-danger-50: #2a1416;
+    --hg-danger-200: #5b2126;
+    --hg-warning-700: #fbbf24;
     --hg-warning-50: #2a2010;
+    --hg-warning-200: #5a4213;
+    --hg-info-700: #93c5fd;
     --hg-info-50: #111c33;
+    --hg-info-200: #1e3a66;
+    --hg-ai-600: #a78bfa;
     --hg-ai-50: #1d1630;
+    --hg-ai-200: #3b2a6b;
+
+    --hg-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --hg-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+    --hg-shadow-lg: 0 24px 48px -16px rgba(0, 0, 0, 0.6);
+    --hg-ring: 0 0 0 4px rgba(94, 234, 212, 0.25);
   }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --hg-text: #e6f0f2;
+  --hg-text-muted: #9db3bc;
+  --hg-border: #22404a;
+  --hg-border-strong: #33555f;
+  --hg-bg: #0b1a20;
+  --hg-surface: #11242c;
+  --hg-surface-alt: #173039;
+  --hg-header-bg: rgba(11, 26, 32, 0.8);
+
+  --hg-primary-50: #0f2e2c;
+  --hg-primary-100: #134039;
+  --hg-primary-200: #1b5a50;
+  --hg-primary-300: #2c8a7a;
+  --hg-primary-600: #2dd4bf;
+  --hg-primary-700: #5eead4;
+  --hg-primary-800: #99f6e4;
+  --hg-on-primary: #0b1a20;
+
+  --hg-sunrise-100: #2a2217;
+  --hg-sunrise-200: #3a2c18;
+  --hg-sunrise-300: #5a4020;
+
+  --hg-danger-700: #f87171;
+  --hg-danger-600: #f87171;
+  --hg-danger-50: #2a1416;
+  --hg-danger-200: #5b2126;
+  --hg-warning-700: #fbbf24;
+  --hg-warning-50: #2a2010;
+  --hg-warning-200: #5a4213;
+  --hg-info-700: #93c5fd;
+  --hg-info-50: #111c33;
+  --hg-info-200: #1e3a66;
+  --hg-ai-600: #a78bfa;
+  --hg-ai-50: #1d1630;
+  --hg-ai-200: #3b2a6b;
+
+  --hg-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --hg-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+  --hg-shadow-lg: 0 24px 48px -16px rgba(0, 0, 0, 0.6);
+  --hg-ring: 0 0 0 4px rgba(94, 234, 212, 0.25);
 }

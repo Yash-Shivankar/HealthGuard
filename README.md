@@ -184,26 +184,25 @@ the admin has its own 2FA gate and an API session does not satisfy it.
 `/api/v1/`, with an OpenAPI schema at `/api/v1/schema/` and Swagger UI at
 `/api/v1/docs/`.
 
-| Endpoint | What it does |
-|---|---|
-| `POST /api/v1/patients/intake/` | Register details, record consent |
-| `GET /api/v1/patients/me/` | The intake record held in this session |
-| `DELETE /api/v1/patients/me/` | Withdraw consent and erase the record |
-| `GET /api/v1/triage/symptoms/` | The symptom vocabulary the model accepts |
-| `POST /api/v1/triage/check/` | Run a check, get a ranked differential |
-| `GET /api/v1/auth/session/` | Who is signed in, and which clinic they see |
-| `POST /api/v1/auth/login/` · `logout/` | Staff session for the clinic app |
-| `POST /api/v1/auth/clinic/` | Switch active clinic (locum working at two) |
-| `GET /api/v1/patients/` | Patients at the caller's clinic, scoped |
-| `GET /api/v1/triage/assessments/` | The clinician review queue, scoped |
-| `PATCH /api/v1/triage/assessments/<id>/review/` | Clinician sign-off |
+| Endpoint                                        | What it does                                |
+| ----------------------------------------------- | ------------------------------------------- |
+| `POST /api/v1/patients/intake/`                 | Register details, record consent            |
+| `GET /api/v1/patients/me/`                      | The intake record held in this session      |
+| `DELETE /api/v1/patients/me/`                   | Withdraw consent and erase the record       |
+| `GET /api/v1/triage/symptoms/`                  | The symptom vocabulary the model accepts    |
+| `POST /api/v1/triage/check/`                    | Run a check, get a ranked differential      |
+| `GET /api/v1/auth/session/`                     | Who is signed in, and which clinic they see |
+| `POST /api/v1/auth/login/` · `logout/`          | Staff session for the clinic app            |
+| `POST /api/v1/auth/clinic/`                     | Switch active clinic (locum working at two) |
+| `GET /api/v1/patients/`                         | Patients at the caller's clinic, scoped     |
+| `GET /api/v1/triage/assessments/`               | The clinician review queue, scoped          |
+| `PATCH /api/v1/triage/assessments/<id>/review/` | Clinician sign-off                          |
 
 The API and the HTML pages call the same service layer, so they cannot drift.
 
 **API scoping is separate from admin scoping.** `ScopedModelAdmin` overrides
 `ModelAdmin` hooks and a DRF view shares none of them, so `common/api/scoped.py`
-restates the same discipline for the API — and `apps/accounts/tests/integration/
-test_api_isolation.py` asserts it independently. A record at another clinic
+restates the same discipline for the API — and `apps/accounts/tests/integration/ test_api_isolation.py` asserts it independently. A record at another clinic
 returns **404, not 403**: a 403 confirms the record exists.
 
 ## Retraining the model
@@ -304,7 +303,7 @@ forest scores 100% and that number means nothing about real patients.
 
 No accuracy figure is shown anywhere in the application, the model abstains
 when input does not resemble its training data, and a unanimous vote is worded
-as a *symptom match*, never as confidence. `MODEL_CARD.md` has the full
+as a _symptom match_, never as confidence. `MODEL_CARD.md` has the full
 reasoning.
 
 Real labelled clinical encounters are the only thing that would make this
@@ -367,7 +366,7 @@ python manage.py abdm_status     # which mode you are in, and what is registered
 > specification and have **not** been round-tripped against a live sandbox,
 > because §11.3 — do we have a sandbox account? — is still unanswered.
 >
-> Everything around them *is* verified: the linkage lifecycle, consent gating,
+> Everything around them _is_ verified: the linkage lifecycle, consent gating,
 > idempotency, masking, the audit trail, QR generation. What is unverified is
 > one layer, and it is confined to that one file so it can be corrected against
 > the current NHA documentation without touching anything else. ABDM has shipped
@@ -401,7 +400,7 @@ none: a second copy of every record outside the erasure path.
 **FHIR R4 is a published standard, so that layer is genuinely verified.**
 `utils/fhir/` builds document bundles and validates them structurally: the
 Composition is first, every `urn:uuid:` reference resolves inside the bundle, no
-duplicate ids, required elements present. What is *not* covered is the NDHM
+duplicate ids, required elements present. What is _not_ covered is the NDHM
 Implementation Guide's profile constraints on top of base FHIR — those are
 marked `# ABDM-SPECIFIC: verify` so the set is greppable.
 
@@ -455,11 +454,11 @@ currently does with it.
 
 ### What is real and what needs a vendor
 
-| Capability | Default provider | Real? |
-|---|---|---|
-| Transcription | `StubTranscriber` | **Simulated** — needs a vendor (§11.5) |
-| Extraction | `LexiconExtractor` | Real, offline, deterministic |
-| Summarisation | `TemplateSummariser` | Real, deterministic |
+| Capability    | Default provider     | Real?                                  |
+| ------------- | -------------------- | -------------------------------------- |
+| Transcription | `StubTranscriber`    | **Simulated** — needs a vendor (§11.5) |
+| Extraction    | `LexiconExtractor`   | Real, offline, deterministic           |
+| Summarisation | `TemplateSummariser` | Real, deterministic                    |
 
 Only transcription genuinely requires a third party. The lexicon covers **123 of
 131** canonical symptoms across three languages with 849 phrases, runs offline,
@@ -483,9 +482,9 @@ fake, but a fake transcript is fabricated clinical content.
 
 There are **two** sign-offs, for two different claims:
 
-- confirming an **intake draft** asserts *these are the symptoms this patient has*
-- reviewing the resulting **assessment** asserts *the differential is clinically
-  sensible*
+- confirming an **intake draft** asserts _these are the symptoms this patient has_
+- reviewing the resulting **assessment** asserts _the differential is clinically
+  sensible_
 
 The assessment created by confirming a draft is still `unreviewed`. A clinician
 may add symptoms the extractor missed and remove ones it invented; proposed and
@@ -496,7 +495,7 @@ confirmed symptoms are separate fields, so the review is visible as a diff.
 The vocabulary has `mild_fever` and `high_fever`. A patient saying "fever" has not
 said which — so bare "fever" becomes a question (`fever - which one?`) surfaced to
 the clinician, rather than guessed or silently dropped. Picking one would fabricate
-a grade *and* change which diseases match.
+a grade _and_ change which diseases match.
 
 ### No medication, ever
 
@@ -509,8 +508,8 @@ where you expect failure is not a guard.
 
 ### Four conditions before anything leaves the building
 
-AUDIT §6: *no patient-identifiable data to third-party LLM APIs without a consent
-basis and a processor agreement.* Implemented as four conditions that must **all**
+AUDIT §6: _no patient-identifiable data to third-party LLM APIs without a consent
+basis and a processor agreement._ Implemented as four conditions that must **all**
 hold:
 
 1. `AI_ALLOW_EXTERNAL_PROCESSING=True` — off by default

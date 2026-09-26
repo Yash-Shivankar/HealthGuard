@@ -23,11 +23,13 @@
  * rather than presenting a dead button.
  */
 
+import { ArrowRight, CalendarDays, Languages, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
-import { Alert, Card, Spinner } from '../../components/common';
+import { Alert, Card, PageHeader, Spinner } from '../../components/common';
+import { ReviewBadge } from '../../components/clinical/ReviewBadge';
 import { aiApi } from '../../services/api';
 import type { IntakeDraft } from '../../types';
 
@@ -92,28 +94,58 @@ export function DescribePage() {
   }
 
   return (
-    <div className="stack">
-      <h1>{t('describe.title')}</h1>
-      <p className="subtle">{t('describe.subtitle')}</p>
+    <div className="hg-flow hg-narrow-wide">
+      <PageHeader title={t('describe.title')} lead={t('describe.subtitle')} />
 
-      <Card>
-        <form onSubmit={submit} className="stack">
-          <label htmlFor="description">{t('describe.label')}</label>
+      <Card className="hg-compose">
+        <form onSubmit={submit} noValidate>
+          <label htmlFor="description" className="hg-compose__label">
+            {t('describe.label')}
+          </label>
           <textarea
             id="description"
+            className="hg-textarea"
             rows={5}
             value={text}
             onChange={(event) => setText(event.target.value)}
             placeholder={t('describe.placeholder')}
+            aria-describedby="description-hint"
             // The three languages the interface supports. A browser with a
             // Devanagari keyboard needs no help; this is for the rest.
             lang={i18n.language}
           />
-          <p className="subtle small">{t('describe.languagesHint')}</p>
+          <p id="description-hint" className="hg-field__hint">
+            <Languages size={14} aria-hidden="true" /> {t('describe.languagesHint')}
+          </p>
 
-          <button type="submit" disabled={busy}>
-            {busy ? t('describe.reading') : t('describe.submit')}
-          </button>
+          {/* Examples in all three languages, whatever the interface language:
+              seeing Devanagari accepted is what convinces a Hindi speaker they
+              can type the way they talk. */}
+          <div className="hg-examples">
+            <span className="hg-small hg-muted">{t('describe.tryExample')}</span>
+            {EXAMPLES.map((example) => (
+              <button
+                key={example.text}
+                type="button"
+                className="hg-example"
+                lang={example.lang}
+                onClick={() => setText(example.text)}
+              >
+                {example.text}
+              </button>
+            ))}
+          </div>
+
+          <div className="hg-compose__actions">
+            <button type="submit" className="hg-btn hg-btn--primary hg-btn--lg" disabled={busy}>
+              <Sparkles size={18} aria-hidden="true" />
+              {busy ? t('describe.reading') : t('describe.submit')}
+            </button>
+            <span className="hg-muted hg-small">{t('describe.or')}</span>
+            <Link to="/symptoms" className="hg-btn hg-btn--ghost">
+              {t('describe.pickManually')}
+            </Link>
+          </div>
         </form>
       </Card>
 
@@ -121,8 +153,14 @@ export function DescribePage() {
       {busy && <Spinner label={t('describe.reading')} />}
 
       {draft && (
-        <Card>
-          <h2>{t('describe.weRead')}</h2>
+        <Card className="hg-reading">
+          <div className="hg-reading__head">
+            <h2 className="hg-card__title">{t('describe.weRead')}</h2>
+            {/* AUDIT 8.3: AI-generated and unreviewed content is visually
+                distinct wherever it appears - including here, where the reader
+                is the patient rather than a clinician. */}
+            <ReviewBadge state="unreviewed" />
+          </div>
 
           {/* Distinct from "you have no symptoms", and the wording must not let
               the first be read as the second. */}
@@ -130,22 +168,22 @@ export function DescribePage() {
             <Alert>{t('describe.understoodNothing')}</Alert>
           ) : (
             <>
-              <p className="subtle small">{t('describe.checkThese')}</p>
-              <ul className="checklist">
+              <p className="hg-small hg-muted">{t('describe.checkThese')}</p>
+              <ul className="hg-checklist">
                 {draft.proposed_symptoms.map((entry) => (
                   <li key={entry.symptom}>
-                    <label>
+                    <label className="hg-check-row">
                       <input
                         type="checkbox"
                         checked={accepted.has(entry.symptom)}
                         onChange={() => toggle(entry.symptom)}
                       />
-                      <span>{entry.label}</span>
+                      <span className="hg-check-row__text">
+                        <strong>{entry.label}</strong>
+                        {/* The evidence, not the number. */}
+                        <small>{t('describe.matchedOn', { phrase: entry.evidence })}</small>
+                      </span>
                     </label>
-                    {/* The evidence, not the number. */}
-                    <span className="subtle small">
-                      {t('describe.matchedOn', { phrase: entry.evidence })}
-                    </span>
                   </li>
                 ))}
               </ul>
@@ -155,43 +193,54 @@ export function DescribePage() {
           {/* Includes the "fever - which one?" questions, which are the most
               useful thing on this screen when they appear. */}
           {draft.unmapped_phrases.length > 0 && (
-            <div className="stack">
+            <div className="hg-unmapped">
               <h3>{t('describe.notUnderstood')}</h3>
-              <p className="subtle small">{t('describe.notUnderstoodHint')}</p>
-              <ul>
+              <p className="hg-small hg-muted">{t('describe.notUnderstoodHint')}</p>
+              <ul className="hg-chips">
                 {draft.unmapped_phrases.map((phrase) => (
-                  <li key={phrase} className="subtle">
-                    {phrase}
-                  </li>
+                  <li key={phrase}>{phrase}</li>
                 ))}
               </ul>
             </div>
           )}
 
           {draft.suggested_days !== null && (
-            <p className="subtle small">
+            <p className="hg-inline-note">
+              <CalendarDays size={16} aria-hidden="true" />
               {t('describe.durationRead', { count: draft.suggested_days })}
             </p>
           )}
 
-          <div className="row">
-            <button type="button" onClick={continueToCheck} disabled={accepted.size === 0}>
+          <div className="hg-actions">
+            <button
+              type="button"
+              className="hg-btn hg-btn--primary"
+              onClick={continueToCheck}
+              disabled={accepted.size === 0}
+            >
               {t('describe.continue')}
+              <ArrowRight size={18} aria-hidden="true" />
             </button>
-            <button type="button" className="secondary" onClick={() => navigate('/symptoms')}>
+            <button type="button" className="hg-btn hg-btn--ghost" onClick={() => navigate('/symptoms')}>
               {t('describe.pickManually')}
             </button>
           </div>
 
-          {/* AUDIT 8.3: AI-generated and unreviewed content is visually
-              distinct wherever it appears - including here, where the reader is
-              the patient rather than a clinician. */}
-          <p className="subtle small">
-            {t('describe.aiNotice')}
-            {draft.simulated && ` ${t('describe.simulatedNotice')}`}
+          <p className="hg-ai-note">
+            <Sparkles size={16} aria-hidden="true" />
+            <span>
+              {t('describe.aiNotice')}
+              {draft.simulated && ` ${t('describe.simulatedNotice')}`}
+            </span>
           </p>
         </Card>
       )}
     </div>
   );
 }
+
+const EXAMPLES = [
+  { lang: 'en', text: 'Fever and headache since yesterday' },
+  { lang: 'hi', text: 'चार दिन से खुजली और दाने हैं' },
+  { lang: 'mr', text: 'दोन दिवसांपासून खोकला आणि ताप आहे' },
+] as const;

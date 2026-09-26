@@ -13,11 +13,21 @@
  * pattern in reverse.
  */
 
+import {
+  ArrowRight,
+  ClipboardList,
+  Clock3,
+  Lock,
+  ShieldCheck,
+  Stethoscope,
+  Undo2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { Alert, Card, Field } from '../../components/common';
+import { Alert, Card, Field, PageHeader } from '../../components/common';
+import { FlowSteps } from '../../components/layout/FlowSteps';
 import { ApiRequestError, patientsApi } from '../../services/api';
 import { isValidMobile } from '../../utils/validators/phone';
 
@@ -62,11 +72,11 @@ export function IntakePage() {
   function validate(): boolean {
     const found: Record<string, string> = {};
     if (!form.name.trim()) found.name = t('common.required');
-    if (!isValidMobile(form.contact)) found.contact = t('intake.contact');
-    if (!form.age || Number(form.age) < 0 || Number(form.age) > 120) found.age = t('intake.age');
+    if (!isValidMobile(form.contact)) found.contact = t('intake.errorContact');
+    if (!form.age || Number(form.age) < 0 || Number(form.age) > 120) found.age = t('intake.errorAge');
     if (!form.height_cm) found.height_cm = t('common.required');
     if (!form.weight_kg) found.weight_kg = t('common.required');
-    if (!form.consent) found.consent = t('intake.consent');
+    if (!form.consent) found.consent = t('intake.errorConsent');
     setErrors(found);
     return Object.keys(found).length === 0;
   }
@@ -107,113 +117,160 @@ export function IntakePage() {
   }
 
   return (
-    <div className="hg-narrow">
-      <h1>{t('intake.title')}</h1>
+    <div className="hg-flow">
+      <FlowSteps current="details" />
 
-      <section className="hg-notice" aria-labelledby="consent-notice-heading">
-        <h2 id="consent-notice-heading" style={{ fontSize: '0.95rem' }}>
-          {t('intake.noticeHeading')}
-        </h2>
-        <dl>
-          <dt>{t('intake.whatWeCollect')}</dt>
-          <dd>{t('intake.whatWeCollectBody')}</dd>
-          <dt>{t('intake.why')}</dt>
-          <dd>{t('intake.whyBody')}</dd>
-          <dt>{t('intake.retention')}</dt>
-          <dd>{t('intake.retentionBody')}</dd>
-          <dt>{t('intake.withdrawing')}</dt>
-          <dd>{t('intake.withdrawingBody')}</dd>
-        </dl>
-      </section>
+      <PageHeader
+        title={t('intake.title')}
+        eyebrow={
+          <span className="hg-chip hg-chip--soft">
+            <Lock size={14} aria-hidden="true" />
+            {t('intake.optionalBadge')}
+          </span>
+        }
+      />
 
-      {failure ? <Alert>{failure}</Alert> : null}
-
-      <Card>
-        <form onSubmit={submit} noValidate>
-          <Field
-            id="name"
-            label={t('intake.name')}
-            value={form.name}
-            error={errors.name}
-            maxLength={100}
-            autoComplete="name"
-            required
-            onChange={(e) => set('name', e.target.value)}
-          />
-          <Field
-            id="contact"
-            label={t('intake.contact')}
-            value={form.contact}
-            error={errors.contact}
-            inputMode="tel"
-            autoComplete="tel"
-            maxLength={20}
-            required
-            onChange={(e) => set('contact', e.target.value)}
-          />
-          <Field
-            id="age"
-            label={t('intake.age')}
-            type="number"
-            min={0}
-            max={120}
-            value={form.age}
-            error={errors.age}
-            required
-            onChange={(e) => set('age', e.target.value)}
-          />
-          <Field
-            id="height_cm"
-            label={t('intake.height')}
-            type="number"
-            min={30}
-            max={275}
-            step="any"
-            value={form.height_cm}
-            error={errors.height_cm}
-            required
-            onChange={(e) => set('height_cm', e.target.value)}
-          />
-          <Field
-            id="weight_kg"
-            label={t('intake.weight')}
-            type="number"
-            min={1}
-            max={650}
-            step="any"
-            value={form.weight_kg}
-            error={errors.weight_kg}
-            required
-            onChange={(e) => set('weight_kg', e.target.value)}
-          />
-
-          <div className={`hg-field${errors.consent ? ' hg-field--error' : ''}`}>
-            <div className="hg-checkbox">
-              <input
-                id="consent"
-                type="checkbox"
-                checked={form.consent}
-                onChange={(e) => set('consent', e.target.checked)}
-              />
-              <label htmlFor="consent">{t('intake.consent')}</label>
+      <div className="hg-split">
+        {/* The notice comes first in the DOM, so a screen reader and a phone
+            user both meet it before the fields - "notice before collection" is
+            the DPDP requirement, and layout must not reorder it. On wide
+            screens it sits beside the form instead of above it. */}
+        <section className="hg-notice" aria-labelledby="consent-notice-heading">
+          <h2 id="consent-notice-heading">
+            <ShieldCheck size={18} aria-hidden="true" />
+            {t('intake.noticeHeading')}
+          </h2>
+          <dl>
+            <div>
+              <dt>
+                <ClipboardList size={16} aria-hidden="true" />
+                {t('intake.whatWeCollect')}
+              </dt>
+              <dd>{t('intake.whatWeCollectBody')}</dd>
             </div>
-            {errors.consent ? (
-              <small className="hg-field__error" role="alert">
-                {errors.consent}
-              </small>
-            ) : null}
-          </div>
+            <div>
+              <dt>
+                <Stethoscope size={16} aria-hidden="true" />
+                {t('intake.why')}
+              </dt>
+              <dd>{t('intake.whyBody')}</dd>
+            </div>
+            <div>
+              <dt>
+                <Clock3 size={16} aria-hidden="true" />
+                {t('intake.retention')}
+              </dt>
+              <dd>{t('intake.retentionBody')}</dd>
+            </div>
+            <div>
+              <dt>
+                <Undo2 size={16} aria-hidden="true" />
+                {t('intake.withdrawing')}
+              </dt>
+              <dd>{t('intake.withdrawingBody')}</dd>
+            </div>
+          </dl>
+        </section>
 
-          <div className="hg-actions">
-            <button type="submit" className="hg-btn hg-btn--primary" disabled={saving}>
-              {t('intake.submit')}
-            </button>
-            <Link to="/symptoms" className="hg-btn hg-btn--secondary">
-              {t('intake.skip')}
-            </Link>
-          </div>
-        </form>
-      </Card>
+        <Card className="hg-form-card">
+          {failure ? <Alert>{failure}</Alert> : null}
+          <form onSubmit={submit} noValidate>
+            <div className="hg-form-grid">
+              <Field
+                id="name"
+                label={t('intake.name')}
+                value={form.name}
+                error={errors.name}
+                maxLength={100}
+                autoComplete="name"
+                required
+                onChange={(e) => set('name', e.target.value)}
+              />
+              <Field
+                id="contact"
+                label={t('intake.contact')}
+                value={form.contact}
+                error={errors.contact}
+                inputMode="tel"
+                autoComplete="tel"
+                maxLength={20}
+                hint={t('intake.contactHint')}
+                required
+                onChange={(e) => set('contact', e.target.value)}
+              />
+            </div>
+            <div className="hg-form-grid hg-form-grid--3">
+              <Field
+                id="age"
+                label={t('intake.age')}
+                type="number"
+                min={0}
+                max={120}
+                value={form.age}
+                error={errors.age}
+                required
+                onChange={(e) => set('age', e.target.value)}
+              />
+              <Field
+                id="height_cm"
+                label={t('intake.height')}
+                type="number"
+                min={30}
+                max={275}
+                step="any"
+                suffix="cm"
+                value={form.height_cm}
+                error={errors.height_cm}
+                required
+                onChange={(e) => set('height_cm', e.target.value)}
+              />
+              <Field
+                id="weight_kg"
+                label={t('intake.weight')}
+                type="number"
+                min={1}
+                max={650}
+                step="any"
+                suffix="kg"
+                value={form.weight_kg}
+                error={errors.weight_kg}
+                required
+                onChange={(e) => set('weight_kg', e.target.value)}
+              />
+            </div>
+
+            {/* The consent box is a large, obvious target and unticked by
+                default. A pre-ticked box is not consent under DPDP. */}
+            <div className={`hg-field${errors.consent ? ' hg-field--error' : ''}`}>
+              <label className="hg-consent" htmlFor="consent">
+                <input
+                  id="consent"
+                  type="checkbox"
+                  checked={form.consent}
+                  aria-describedby={errors.consent ? 'consent-error' : undefined}
+                  onChange={(e) => set('consent', e.target.checked)}
+                />
+                <span>{t('intake.consent')}</span>
+              </label>
+              {errors.consent ? (
+                <small id="consent-error" className="hg-field__error" role="alert">
+                  {errors.consent}
+                </small>
+              ) : null}
+            </div>
+
+            <div className="hg-actions">
+              <button type="submit" className="hg-btn hg-btn--primary hg-btn--lg" disabled={saving}>
+                {t('intake.submit')}
+                <ArrowRight size={18} aria-hidden="true" />
+              </button>
+              <Link to="/symptoms" className="hg-btn hg-btn--ghost">
+                {t('intake.skip')}
+              </Link>
+            </div>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }

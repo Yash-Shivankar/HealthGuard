@@ -6,6 +6,7 @@
  * belongs to one clinic, because a picker with a single option is noise.
  */
 
+import { Building } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -19,8 +20,9 @@ export function ClinicSwitcher() {
   if (!session || session.available_clinics.length < 2) return null;
 
   return (
-    <div className="hg-field" style={{ margin: 0 }}>
-      <label htmlFor="clinic-switcher" className="hg-small hg-muted">
+    <div className="hg-pill-select">
+      <Building size={16} aria-hidden="true" className="hg-pill-select__icon" />
+      <label htmlFor="clinic-switcher" className="hg-visually-hidden">
         {t('clinic.activeClinic')}
       </label>
       <select
