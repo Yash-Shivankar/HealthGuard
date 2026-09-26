@@ -102,6 +102,38 @@ UNFOLD = {
                 ],
             },
             {
+                "title": "ABDM",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "ABHA links",
+                        "icon": "badge",
+                        "link": reverse_lazy("admin:abdm_abhalink_changelist"),
+                        "permission": "config.settings.unfold.can_view_abdm",
+                    },
+                    {
+                        "title": "Facility registry",
+                        "icon": "domain_verification",
+                        "link": reverse_lazy("admin:abdm_facilityregistration_changelist"),
+                        "permission": "config.settings.unfold.can_view_abdm_registry",
+                    },
+                    {
+                        "title": "Practitioner registry",
+                        "icon": "how_to_reg",
+                        "link": reverse_lazy(
+                            "admin:abdm_practitionerregistration_changelist"
+                        ),
+                        "permission": "config.settings.unfold.can_view_abdm_registry",
+                    },
+                    {
+                        "title": "Gateway calls",
+                        "icon": "swap_horiz",
+                        "link": reverse_lazy("admin:abdm_gatewaycall_changelist"),
+                        "permission": "config.settings.unfold.can_view_gateway_calls",
+                    },
+                ],
+            },
+            {
                 "title": "Compliance",
                 "separator": True,
                 "items": [
@@ -191,6 +223,18 @@ def can_view_consent(request) -> bool:
 
 def can_view_audit(request) -> bool:
     return _can(request, "audit.view_accesslogentry")
+
+
+def can_view_abdm(request) -> bool:
+    return _can(request, "abdm.view_abhalink")
+
+
+def can_view_abdm_registry(request) -> bool:
+    return _can(request, "abdm.view_facilityregistration")
+
+
+def can_view_gateway_calls(request) -> bool:
+    return _can(request, "abdm.view_gatewaycall")
 
 
 def can_view_clinics(request) -> bool:

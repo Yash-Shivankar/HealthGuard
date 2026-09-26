@@ -223,6 +223,41 @@ clinical meaning is danger - never on a control, never as chrome (AUDIT 8.3).
     {% endcomponent %}
 </div>
 
+{# ---------- ABDM (AUDIT 4.2 M1) ---------- #}
+<h2 class="font-semibold mb-4 text-font-important-light dark:text-font-important-dark">
+    {% translate "ABDM" %}
+</h2>
+<div class="grid gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-4">
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "ABHA linked" %}</p>
+        <p class="font-semibold text-2xl mt-1">{{ dashboard.abdm.abha_verified }}</p>
+        <p class="text-subtle text-xs mt-1">{% translate "verified" %}</p>
+    {% endcomponent %}
+
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "ABHA pending" %}</p>
+        <p class="font-semibold text-2xl mt-1 {% if dashboard.abdm.abha_pending %}text-amber-600 dark:text-amber-400{% endif %}">
+            {{ dashboard.abdm.abha_pending }}
+        </p>
+        <p class="text-subtle text-xs mt-1">{% translate "awaiting verification" %}</p>
+    {% endcomponent %}
+
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "Gateway calls today" %}</p>
+        <p class="font-semibold text-2xl mt-1">{{ dashboard.abdm.gateway_calls_today }}</p>
+    {% endcomponent %}
+
+    {# A failing integration is invisible from the clinical screens; the first #}
+    {# sign is usually a patient being told their ABHA "did not work".        #}
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "Gateway failures today" %}</p>
+        <p class="font-semibold text-2xl mt-1 {% if dashboard.abdm.gateway_failures_today %}text-amber-600 dark:text-amber-400{% endif %}">
+            {{ dashboard.abdm.gateway_failures_today }}
+        </p>
+        <p class="text-subtle text-xs mt-1">{% translate "check the gateway call log" %}</p>
+    {% endcomponent %}
+</div>
+
 {# ---------- Charts ---------- #}
 <div class="grid gap-4 mb-8 lg:grid-cols-2">
     {% component "unfold/components/card.html" with title="Checks per day" description="Last 30 days" %}

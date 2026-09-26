@@ -32,6 +32,10 @@ class ConsentPurpose(models.TextChoices):
     """
 
     SYMPTOM_CHECK = "symptom_check", "Symptom check and clinician review"
+    # Separate on purpose. Agreeing to a symptom check is not agreeing to link
+    # a national health identifier and share records through ABDM, and the
+    # DPDP Rules require notice to be itemised per purpose (AUDIT 4.1, 4.2).
+    ABDM_LINKAGE = "abdm_linkage", "Link an ABHA and share records via ABDM"
 
 
 class ConsentArtefact(models.Model):

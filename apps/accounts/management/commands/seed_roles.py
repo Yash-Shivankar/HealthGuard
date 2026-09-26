@@ -43,6 +43,8 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "patients.view_patient",
         "patients.add_patient",
         "patients.change_patient",
+        # ABHA linkage happens at registration, which is this desk.
+        "abdm.view_abhalink",
     ),
     Role.DOCTOR: (
         "patients.view_patient",
@@ -50,6 +52,9 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         # Sign-off. The only clinical write a doctor needs in the admin.
         "triage.change_triageassessment",
         "consent.view_consentartefact",
+        # A doctor sees whether a patient has an ABHA; linking one is a front-
+        # desk task at registration, which is where M1 puts it.
+        "abdm.view_abhalink",
     ),
     Role.OWNER: (
         "patients.view_patient",
@@ -63,6 +68,9 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "accounts.add_membership",
         "accounts.change_membership",
         "audit.view_accesslogentry",
+        "abdm.view_abhalink",
+        "abdm.view_facilityregistration",
+        "abdm.view_practitionerregistration",
     ),
     Role.PLATFORM_OPS: (
         # Read-only on clinical data, across clinics.
@@ -80,6 +88,13 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "compliance.view_breachincident",
         "compliance.add_breachincident",
         "compliance.change_breachincident",
+        # Registry onboarding and gateway health are ops work.
+        "abdm.view_abhalink",
+        "abdm.view_facilityregistration",
+        "abdm.change_facilityregistration",
+        "abdm.view_practitionerregistration",
+        "abdm.change_practitionerregistration",
+        "abdm.view_gatewaycall",
     ),
 }
 

@@ -290,6 +290,9 @@ measurable.
       in; per-action re-auth is not.
 - [ ] Route `event=admin_superuser_login` to a channel a human reads. The log
       line exists; the alert rule is a deployment step.
+- [ ] **Obtain ABDM sandbox access** (§11.3) and verify every constant in
+      `apps/abdm/services/endpoints.py` against it. M1 is built but unverified
+      end to end, and sandbox certification cannot start without this.
 - [ ] Get clinical sign-off on the urgency thresholds in
       `prediction_app/services/triage.py`. They are inherited magic numbers
       with no clinical basis, documented as such in the module.
@@ -299,6 +302,49 @@ measurable.
 - [ ] Fill the one remaining content gap: `Hyperthyroidism` has no home
       remedies row. It is deliberately **not** aliased to the `Hypothyroidism`
       row, because they are different diseases.
+
+## ABDM (M1)
+
+ABHA linkage, HFR facility registration, HPR practitioner registration and
+Scan-&-Share, in `apps/abdm/`.
+
+```bash
+python manage.py abdm_status     # which mode you are in, and what is registered
+```
+
+> **The wire format is unverified.** The endpoint paths and payload shapes in
+> `apps/abdm/services/endpoints.py` are written from the published ABDM
+> specification and have **not** been round-tripped against a live sandbox,
+> because §11.3 — do we have a sandbox account? — is still unanswered.
+>
+> Everything around them *is* verified: the linkage lifecycle, consent gating,
+> idempotency, masking, the audit trail, QR generation. What is unverified is
+> one layer, and it is confined to that one file so it can be corrected against
+> the current NHA documentation without touching anything else. ABDM has shipped
+> more than one major revision of these APIs — treat those constants as a
+> starting point to check, not as fact.
+
+`ABDM_ENABLED` is off by default and every call goes to a stub, so the
+application runs end to end with no credentials. Each record carries
+`simulated=True`, because a stub call and a live call otherwise look identical
+in the UI.
+
+Three rules the code enforces:
+
+- **Linking needs its own consent.** `ConsentPurpose.ABDM_LINKAGE` is separate
+  from the symptom-check purpose — agreeing to a symptom check is not agreeing
+  to link a national health identifier.
+- **The ABHA is treated as the most sensitive field in the system.** Masked in
+  every list and every API response, not searchable, and it **cascades with the
+  patient** — an ABHA left behind after a DPDP erasure is a permanent,
+  nationally-resolvable pointer to someone whose data you promised to delete.
+- **The QR carries no patient data.** Facility identity and a rotating token
+  only. A QR is a broadcast: printed, stuck to a desk, photographed by whoever
+  walks past, and it cannot be un-shared.
+
+Every outbound call is recorded — operation, status, timing, correlation id —
+with **no request or response bodies**, for the same reason the access log holds
+none: a second copy of every record outside the erasure path.
 
 ## Regulatory position
 

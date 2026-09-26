@@ -32,6 +32,7 @@ from datetime import timedelta
 from django.core.cache import cache
 from django.utils import timezone
 
+from apps.abdm.repositories.abdm_repository import AbhaRepository, GatewayCallRepository
 from apps.accounts.models import Role
 from apps.accounts.repositories.membership_repository import ClinicRepository
 from apps.compliance.repositories.compliance_repository import (
@@ -56,10 +57,11 @@ REVIEW_SLA_HOURS = 24
 RETENTION_YEARS = 3
 RETENTION_WARNING_DAYS = 30
 
-#: Still genuinely not measured. Everything the audit lists for Phase 4 is now
-#: live; what remains needs the ABDM integration from Phases 5-6.
+#: Still genuinely not measured. ABHA linkage (M1) is live; record *volume*
+#: pushed to ABDM is an M2 concept and needs the FHIR exchange.
 PENDING_TILES = (
-    "ABDM records pushed this month, which the DHIS incentive pays on (Phases 5-6)",
+    "ABDM records pushed this month, which the DHIS incentive pays on - needs "
+    "the FHIR exchange from M2 (Phase 6)",
     "Consent artefacts expiring in 30 days - needs consent expiry, which arrives "
     "with ABDM HIE-CM consent in Phase 6",
 )
@@ -77,6 +79,8 @@ class DashboardService:
         retention: RetentionRepository | None = None,
         dsr: DSRRepository | None = None,
         breaches: BreachRepository | None = None,
+        abha: AbhaRepository | None = None,
+        gateway: GatewayCallRepository | None = None,
     ):
         self.patients = patients or PatientRepository()
         self.consent = consent or ConsentRepository()
@@ -85,6 +89,8 @@ class DashboardService:
         self.retention = retention or RetentionRepository()
         self.dsr = dsr or DSRRepository()
         self.breaches = breaches or BreachRepository()
+        self.abha = abha or AbhaRepository()
+        self.gateway = gateway or GatewayCallRepository()
 
     def summary(self, *, use_cache: bool = True) -> dict:
         if use_cache:
@@ -96,6 +102,7 @@ class DashboardService:
             "operations": self.operations(),
             "clinical_safety": self.clinical_safety(),
             "compliance": self.compliance(),
+            "abdm": self.abdm(),
             "charts": {
                 "assessments_per_day": self.assessments_per_day(),
                 "urgency_mix": self.urgency_mix(),
@@ -175,6 +182,22 @@ class DashboardService:
             "breach_open": self.breaches.count_open(),
             "breach_hours_remaining": breach.hours_remaining if breach else None,
             "breach_overdue": bool(breach and breach.is_overdue),
+        }
+
+    # --- ABDM (AUDIT 4.2 M1) -----------------------------------------------
+    def abdm(self) -> dict:
+        """ABHA linkage and gateway health.
+
+        The gateway failure count is the number that matters day to day: a
+        failing integration is invisible from the clinical screens, and the
+        first sign is usually a patient being told their ABHA "did not work".
+        """
+        day_ago = timezone.now() - timedelta(days=1)
+        return {
+            "abha_verified": self.abha.count_verified(),
+            "abha_pending": self.abha.count_pending(),
+            "gateway_calls_today": self.gateway.count_since(day_ago),
+            "gateway_failures_today": self.gateway.count_failed_since(day_ago),
         }
 
     # --- Charts ------------------------------------------------------------

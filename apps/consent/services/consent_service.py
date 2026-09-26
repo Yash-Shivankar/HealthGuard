@@ -49,6 +49,16 @@ class ConsentService:
             return False
         return self.repository.active_for(patient, purpose) is not None
 
+    def active_artefact(
+        self, *, patient, purpose: str = ConsentPurpose.SYMPTOM_CHECK
+    ) -> ConsentArtefact | None:
+        """The live artefact, so a caller can record *which* notice permitted
+        an action rather than merely that one did.
+        """
+        if patient is None:
+            return None
+        return self.repository.active_for(patient, purpose)
+
     def require_active(
         self, *, patient, purpose: str = ConsentPurpose.SYMPTOM_CHECK
     ) -> None:

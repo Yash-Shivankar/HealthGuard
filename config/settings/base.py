@@ -126,6 +126,8 @@ LOCAL_APPS = [
     # DPDP obligations that have deadlines: retention notices, data-subject
     # requests, breach incidents (AUDIT 4.1, 8.5).
     "apps.compliance",
+    # ABDM: ABHA linkage, HFR/HPR registration, Scan-&-Share (AUDIT 4.2 M1).
+    "apps.abdm",
 ]
 
 INSTALLED_APPS = UNFOLD_APPS + DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -375,3 +377,23 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = list(
     dict.fromkeys(env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=[]) + CORS_ALLOWED_ORIGINS)
 )
+
+
+# --- ABDM (AUDIT 4.2) --------------------------------------------------------
+# Off by default, and it takes two deliberate acts to turn on: ABDM_ENABLED
+# **and** credentials. Accidentally pointing a development machine at a real
+# health network should not be one typo away.
+#
+# While this is off, apps/abdm/services/gateway.py uses StubTransport and every
+# record it produces is flagged simulated=True, so a sandbox-era row is never
+# mistaken for a production one.
+#
+# BEFORE ENABLING: the endpoint paths and payload shapes in
+# apps/abdm/services/endpoints.py are written from the published specification
+# and have NOT been verified against a live sandbox (AUDIT 11.3 is unanswered).
+# Check every one against the current NHA documentation first.
+ABDM_ENABLED = env.bool("ABDM_ENABLED", default=False)
+ABDM_BASE_URL = env.str("ABDM_BASE_URL", default="")
+ABDM_CLIENT_ID = env.str("ABDM_CLIENT_ID", default="")
+ABDM_CLIENT_SECRET = env.str("ABDM_CLIENT_SECRET", default="")
+ABDM_TIMEOUT_SECONDS = env.float("ABDM_TIMEOUT_SECONDS", default=10.0)
