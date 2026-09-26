@@ -7,11 +7,32 @@ assessment** — not a diagnosis, and never a medicine recommendation.
 > Read [`docs/AUDIT.md`](docs/AUDIT.md) for the full technical and product
 > audit, and [`docs/HISTORY.md`](docs/HISTORY.md) for the decision log.
 
+## Repository layout
+
+Two halves, each self-contained:
+
+```
+backend/     the Django project - apps, config, ML artefacts, its own Dockerfile
+frontend/    the React + TypeScript SPA (Vite)
+docs/        AUDIT.md, HISTORY.md, AI_CARD.md - they describe the whole project
+docker-compose.yml   orchestrates both, so it stays at the root
+```
+
+They are separate deployables and talk over HTTP only. In development the SPA
+runs on 5173 and proxies `/api` to Django on 8000, which keeps the session
+cookie first-party and exercises the same same-origin path production uses.
+
+**Every backend command below is run from `backend/`.** `BASE_DIR` is derived
+from the settings module's own location rather than the process working
+directory (AUDIT §2.5), so the code does not care where you invoke it from - but
+`manage.py` and `pytest.ini` live in `backend/`.
+
 ## Setup
 
 ```bash
-python -m venv venv
-venv/Scripts/activate          # Linux/macOS: source venv/bin/activate
+cd backend
+python -m venv ../venv                # or venv/, wherever you prefer it
+../venv/Scripts/activate              # Linux/macOS: source ../venv/bin/activate
 pip install -r requirements-dev.txt
 cp .env.example .env
 ```
@@ -32,7 +53,7 @@ python manage.py runserver
 
 `seed_roles` is idempotent, so run it on every deploy. Roles defined in a
 migration drift the moment someone edits a group in the admin; re-asserting them
-from `apps/accounts/management/commands/seed_roles.py` keeps that file the source
+from `backend/apps/accounts/management/commands/seed_roles.py` keeps that file the source
 of truth.
 
 ### The admin
@@ -100,7 +121,7 @@ pins an exception the audit reproduced against the running application.
 A React + TypeScript SPA under `frontend/`, built with Vite.
 
 ```bash
-cd frontend
+cd frontend       # from the repository root
 npm install
 npm run dev        # http://localhost:5173, proxying /api to Django on :8000
 npm run build      # checks locale parity, typechecks, then bundles to dist/
@@ -170,12 +191,14 @@ returns **404, not 403**: a 403 confirms the record exists.
 python -m ml.train
 ```
 
-Writes `ml/artifacts/model.joblib`, `metrics.json` and `MODEL_CARD.md`. The web
+Writes `backend/ml/artifacts/model.joblib`, `metrics.json` and `MODEL_CARD.md`. The web
 app never trains — it loads the artefact once per process. Read
-[`ml/artifacts/MODEL_CARD.md`](ml/artifacts/MODEL_CARD.md) before quoting any
+[`backend/ml/artifacts/MODEL_CARD.md`](backend/ml/artifacts/MODEL_CARD.md) before quoting any
 number about this model.
 
 ## Layout
+
+All of this lives under `backend/`:
 
 ```
 config/              Django project package only
@@ -198,11 +221,11 @@ ml/                  offline training; not imported by the app at runtime
   ├── dataset.py     canonical data loading and cleaning
   ├── train.py       the pipeline
   └── artifacts/     versioned model + metrics + model card
-frontend/            React + TypeScript SPA (Vite)
 templates/  static/  the server-rendered surface
 data/                source CSVs, as delivered
-docs/                AUDIT.md, HISTORY.md, AI_CARD.md
 ```
+
+`frontend/` and `docs/` sit beside `backend/` at the repository root.
 
 Each app is layered the same way (AUDIT §7.1):
 
@@ -506,8 +529,8 @@ every model") is §6 Tier 2, not Tier 1. Free-text intake makes it more urgent t
 it was with a checkbox list. It is the first thing to build next.
 
 ```bash
-grep -rn "AI-VENDOR-SPECIFIC: verify" apps/   # needs a chosen vendor (§11.5)
-grep -rn "CLINICAL-REVIEW-NEEDED" apps/       # needs a clinician (§11.6)
+grep -rn "AI-VENDOR-SPECIFIC: verify" backend/apps/   # needs a chosen vendor (§11.5)
+grep -rn "CLINICAL-REVIEW-NEEDED" backend/apps/       # needs a clinician (§11.6)
 ```
 
 ## Regulatory position

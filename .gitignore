@@ -35,6 +35,12 @@ htmlcov/
 coverage.xml
 
 # ---- Django ----------------------------------------------------------------
-/staticfiles/
-/media_root/
+# Anchored to backend/ since the split; the patterns above are intentionally
+# unanchored so .env and *.sqlite3 are ignored at any depth.
+/backend/staticfiles/
+/backend/media_root/
 *.log
+
+# ---- Frontend --------------------------------------------------------------
+/frontend/node_modules/
+/frontend/dist/

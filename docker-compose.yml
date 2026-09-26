@@ -28,18 +28,25 @@ services:
       retries: 10
 
   web:
-    build: .
+    build: ./backend
     command: python manage.py runserver 0.0.0.0:8000
+    # The env file lives with the backend, so it is named rather than picked up
+    # implicitly: Compose only auto-reads a .env beside this file, and after the
+    # split there is none there. A missing backend/.env fails the command with
+    # the path in the message, which is the right kind of loud.
+    env_file:
+      - ./backend/.env
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.dev
       DJANGO_DEBUG: "True"
-      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY in your .env}
+      # Overrides whatever DATABASE_URL the env file carries: inside the network
+      # the database is `db`, not 127.0.0.1.
       DATABASE_URL: postgres://healthguard:healthguard@db:5432/healthguard
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
+      - ./backend:/app
     depends_on:
       db:
         condition: service_healthy
