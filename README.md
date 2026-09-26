@@ -29,8 +29,31 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-The admin is **not** at `/admin/` — it is mounted at `DJANGO_ADMIN_URL` from
-your `.env` (default `internal-ops/`).
+### The admin
+
+It is **not** at `/admin/` — it is mounted at `DJANGO_ADMIN_URL` from your
+`.env` (default `internal-ops/`). Django Admin themed with
+[django-unfold](https://unfoldadmin.com/), which is a **staff tool, not a
+product surface**: the doctor's daily screen is a Phase 4 React build, and
+keeping that line is what stops this becoming a bad EMR (AUDIT §8.1).
+
+Staff access needs a verified second factor. The first device is enrolled out
+of band, because a 2FA requirement nobody can satisfy is worse than none:
+
+```bash
+python manage.py addstatictoken your-username
+```
+
+That prints a single-use backup token. Sign in with it — username and password
+first, then pick the device and enter the token — and add a TOTP device from
+the admin. For local development before anyone has enrolled, set
+`ADMIN_REQUIRE_2FA=False`.
+
+Other controls, all in `.env.example`: login lockout after 5 failures on
+username+IP together (`django-axes`), a 15-minute idle timeout on staff
+sessions, and an optional `ADMIN_IP_ALLOWLIST`. The allowlist ships empty —
+AUDIT §11.7 asks whether ops will be on a fixed IP and that is unanswered, so
+enabling it by default would risk locking you out of your own admin.
 
 ### Postgres
 
@@ -99,14 +122,16 @@ number about this model.
 
 ```
 config/              Django project package only
-  ├── settings/      base · dev · prod · test
+  ├── settings/      base · dev · prod · test · unfold
   ├── urls.py        root router
-  └── api.py         /api/v1/ router
+  ├── api.py         /api/v1/ router
+  └── admin.py       custom AdminSite: branding and the 2FA gate
 apps/                one app per bounded context
   ├── patients/      patient master
   ├── consent/       DPDP consent artefacts
-  └── triage/        symptom intake and prediction
-common/              middleware, shared Django building blocks
+  ├── triage/        symptom intake and prediction
+  └── audit/         read-access log and the ops dashboard
+common/              middleware, base admin classes, shared building blocks
 utils/               validators, domain exceptions, logging, pagination
 ml/                  offline training; not imported by the app at runtime
   ├── dataset.py     canonical data loading and cleaning
@@ -164,6 +189,17 @@ measurable.
       is confirmed done.**
 - [x] ~~Rotate `SECRET_KEY`.~~ Done — a fresh key is in `.env` (gitignored) and
       the old one is redacted throughout history.
+- [ ] Enrol a TOTP device for every staff account and confirm
+      `ADMIN_REQUIRE_2FA=True` in the deployed environment.
+- [ ] Decide whether ops staff will be on a fixed IP or VPN (AUDIT §11.7). If
+      so, set `ADMIN_IP_ALLOWLIST` — it is the cheapest high-value control
+      available and it ships disabled.
+- [ ] Serve the admin from a separate hostname to the patient app, so different
+      WAF and network rules can apply (AUDIT §8.10).
+- [ ] Add re-authentication for sensitive admin actions. The idle timeout is
+      in; per-action re-auth is not.
+- [ ] Route `event=admin_superuser_login` to a channel a human reads. The log
+      line exists; the alert rule is a deployment step.
 - [ ] Get clinical sign-off on the urgency thresholds in
       `prediction_app/services/triage.py`. They are inherited magic numbers
       with no clinical basis, documented as such in the module.

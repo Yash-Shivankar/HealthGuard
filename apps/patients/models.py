@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
+from simple_history.models import HistoricalRecords
 
 from utils.validators.phone import mask_mobile
 
@@ -44,6 +45,19 @@ class Patient(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    # Per-change snapshots (AUDIT 8.9).
+    #
+    # cascade_delete_history is **not optional here**. A history table keeps a
+    # full copy of every version of the row, including the name and mobile
+    # number. If it survived an erasure, "we deleted your data" would be false
+    # - the DPDP right to erasure and the audit-trail obligation pull in
+    # opposite directions, and erasure wins for the *content*.
+    #
+    # What survives an erasure instead holds no personal data: the withdrawn
+    # ConsentArtefact (evidence the erasure was requested and lawful) and the
+    # AccessLogEntry (evidence of who did it and when).
+    history = HistoricalRecords(cascade_delete_history=True)
 
     class Meta:
         verbose_name = "Patient"

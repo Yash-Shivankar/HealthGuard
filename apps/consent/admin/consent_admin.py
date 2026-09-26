@@ -5,13 +5,14 @@ if staff can edit it, it stops being evidence (AUDIT 4.1, 8.9).
 """
 
 from django.contrib import admin
-from django.utils.html import format_html
+from unfold.decorators import display
 
 from apps.consent.models import ConsentArtefact
+from common.admin import ReadOnlyModelAdmin
 
 
 @admin.register(ConsentArtefact)
-class ConsentArtefactAdmin(admin.ModelAdmin):
+class ConsentArtefactAdmin(ReadOnlyModelAdmin):
     list_display = (
         "patient_ref",
         "purpose",
@@ -25,6 +26,9 @@ class ConsentArtefactAdmin(admin.ModelAdmin):
     ordering = ("-granted_at",)
     list_per_page = 50
     list_select_related = ("patient",)
+    # Reading a consent artefact is not a patient-record read; logging every
+    # list view here would bury the entries that matter.
+    audit_reads = False
     readonly_fields = (
         "patient",
         "patient_ref",
@@ -35,21 +39,17 @@ class ConsentArtefactAdmin(admin.ModelAdmin):
         "created_at",
     )
 
-    @admin.display(description="State")
+    # Unfold renders a label with a colour token rather than inline CSS, so
+    # the palette stays in one place and dark mode works (AUDIT 8.3).
+    @display(
+        description="State",
+        label={"Active": "success", "Withdrawn": "warning"},
+    )
     def state(self, obj: ConsentArtefact) -> str:
-        # Colour paired with text, never carrying the meaning alone (8.3).
-        if obj.is_withdrawn:
-            return format_html('<span style="color:#b45309;">Withdrawn</span>')
-        return format_html('<span style="color:#15803d;">Active</span>')
+        # Colour is always paired with text, never carrying meaning alone.
+        return "Withdrawn" if obj.is_withdrawn else "Active"
 
-    def has_add_permission(self, request) -> bool:
-        return False
-
-    def has_change_permission(self, request, obj=None) -> bool:
-        return False
-
-    def has_delete_permission(self, request, obj=None) -> bool:
-        """Never. This record outlives the patient row by design - it is what
-        shows the Data Protection Board that an erasure was lawful.
-        """
-        return False
+    # Deletion is refused by ReadOnlyModelAdmin. Restated here because the
+    # reason is specific to this model: the artefact outlives the patient row
+    # by design - it is what shows the Data Protection Board that an erasure
+    # was lawful. Deleting it would destroy the evidence for the erasure.

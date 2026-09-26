@@ -12,6 +12,20 @@ djangorestframework==3.16.1
 django-filter==25.2
 drf-spectacular==0.28.0
 
+# --- Admin (AUDIT 8) ---
+# Unfold 0.107.0: MIT, supports Django 5.2/6.0/6.1 and Python 3.12-3.14, and
+# ships the dashboard components the compliance screen needs. Chosen over
+# Jazzmin (no dashboard components), JET Reboot (AGPL-3.0, wrong licence for
+# commercial clinic software) and Baton (paid AI tier). It is incrementally
+# adoptable: remove one app and stock admin still works.
+django-unfold==0.107.0
+# Per-change snapshots on clinical models for the DPDP audit trail (8.9).
+django-simple-history==3.13.0
+# Login lockout and 2FA (8.10).
+django-axes==8.3.1
+django-otp==1.7.3
+qrcode==8.2
+
 # --- Database ---
 # psycopg 3. Postgres is the target (11.1); DATABASE_URL still allows SQLite
 # for local work and tests.

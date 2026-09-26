@@ -49,3 +49,19 @@ class ConsentRepository:
     @staticmethod
     def purposes() -> list[str]:
         return [choice.value for choice in ConsentPurpose]
+
+    # --- Aggregates for the operations dashboard (AUDIT 8.5) ---------------
+
+    @staticmethod
+    def state_counts() -> dict[str, int]:
+        """Active and withdrawn counts in one query rather than two."""
+        from django.db.models import Count, Q
+
+        result = ConsentArtefact.objects.aggregate(
+            active=Count("pk", filter=Q(withdrawn_at__isnull=True)),
+            withdrawn=Count("pk", filter=Q(withdrawn_at__isnull=False)),
+        )
+        return {
+            "active": result["active"] or 0,
+            "withdrawn": result["withdrawn"] or 0,
+        }

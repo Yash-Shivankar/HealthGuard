@@ -1,0 +1,101 @@
+{% extends 'unfold/layouts/unauthenticated.html' %}
+
+{% load i18n static unfold %}
+
+{% comment %}
+Admin login, with the second factor (AUDIT 8.10).
+
+Unfold's own admin/login.html renders only `username` and `password`. The site
+uses django-otp's OTPAdminAuthenticationForm, which adds `otp_token` - so
+without this override the field the form validates against would never be
+shown, and a 2FA requirement nobody can satisfy locks everyone out. That is
+worse than no 2FA, because the first thing anyone does is switch it off.
+
+Copied from Unfold rather than extended because the upstream template has no
+block around the field list. Re-check it against Unfold on upgrade.
+{% endcomment %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    {{ form.media }}
+{% endblock %}
+
+{% block title %}{{ title }} | {{ site_title }}{% endblock %}
+
+{% block content %}
+    {% include "unfold/helpers/unauthenticated_title.html" with title=site_title|default:_('Django site admin') subtitle=_('Welcome back to') %}
+
+    {% include "unfold/helpers/messages.html" %}
+
+    {% if form.errors or form.non_field_errors %}
+        <div class="flex flex-col gap-4 mb-8 *:mb-0">
+            {% include "unfold/helpers/messages/errornote.html" with errors=form.errors %}
+            {% include "unfold/helpers/messages/error.html" with errors=form.non_field_errors %}
+
+            {% if user.is_authenticated %}
+                {% blocktranslate trimmed asvar message %}
+                    You are authenticated as {{ username }}, but are not authorized to
+                    access this page. Would you like to login to a different account?
+                {% endblocktranslate %}
+                {% include "unfold/helpers/messages/error.html" with error=message %}
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <form action="{{ app_path }}" method="post" id="login-form">
+        {% csrf_token %}
+
+        {% include "unfold/helpers/field.html" with field=form.username %}
+        {% include "unfold/helpers/field.html" with field=form.password %}
+
+        {% comment %}
+        Sign-in is two steps, because django-otp 1.7 requires an explicit
+        device choice: trying every registered device in turn would record a
+        failed attempt against each one that did not match, throttling devices
+        the person never used.
+
+          step 1  username + password  -> the form comes back with the device
+                                          list populated
+          step 2  pick the device, enter the code
+
+        So otp_device is rendered as a visible select as soon as it has
+        choices. An earlier version of this template hid it, which made the
+        second step impossible to complete.
+        {% endcomment %}
+        {% if form.fields.otp_device.widget.choices %}
+            <div class="mb-4">
+                <label class="block font-semibold mb-2 text-font-important-light text-sm dark:text-font-important-dark" for="{{ form.otp_device.id_for_label }}">
+                    {% translate "Second factor" %}
+                </label>
+                {{ form.otp_device }}
+            </div>
+        {% endif %}
+
+        {% if form.otp_token %}
+            {% include "unfold/helpers/field.html" with field=form.otp_token %}
+
+            <p class="mb-2 text-xs text-subtle">
+                {% if form.fields.otp_device.widget.choices %}
+                    {% translate "Choose your device above, then enter the six-digit code from your authenticator app or one of your backup tokens." %}
+                {% else %}
+                    {% translate "Enter your username and password first; you will then be asked for a code." %}
+                {% endif %}
+            </p>
+        {% endif %}
+
+        <div class="flex flex-col gap-3 mt-6">
+            {% component "unfold/components/button.html" with submit=1 variant="primary" class="submit-row w-full" %}
+                {% translate 'Log in' %} <span class="material-symbols-outlined relative right-0 transition-all group-hover:-right-1 text-sm">arrow_forward</span>
+            {% endcomponent %}
+
+            {% url 'admin_password_reset' as password_reset_url %}
+            {% url 'admin:admin_password_reset' as unfold_password_reset_url %}
+
+            {% if password_reset_url or unfold_password_reset_url %}
+                {% component "unfold/components/button.html" with href=password_reset_url|default:unfold_password_reset_url variant="secondary" class="password-reset-link w-full" %}
+                    {% translate 'Forgotten your password or username?' %}
+                {% endcomponent %}
+            {% endif %}
+        </div>
+    </form>
+{% endblock %}

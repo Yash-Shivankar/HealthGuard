@@ -1,0 +1,242 @@
+{% extends "admin/base.html" %}
+{% load i18n unfold %}
+
+{% comment %}
+The operations dashboard (AUDIT 8.5).
+
+Overrides Unfold's default index, which shows a "recent actions" list. The
+audit is explicit that this is not a dashboard, and that the tiles below are
+"the DPDP obligations rendered as a screen you actually look at".
+
+Two presentation decisions worth stating:
+
+Charts are inline bars with the numbers printed next to them, not Chart.js
+canvases. They work without JavaScript, they are readable by a screen reader,
+and they keep the Chart.js payload shape out of the service layer. Swap in
+{% templatetag openblock %} component "unfold/components/chart/line.html" ...
+if richer charts are wanted later.
+
+Every coloured element carries a text label. Red appears only where the
+clinical meaning is danger - never on a control, never as chrome (AUDIT 8.3).
+{% endcomment %}
+
+{% block title %}{{ index_title }} | {{ site_title }}{% endblock %}
+
+{% block branding %}
+    {% include "unfold/helpers/site_branding.html" %}
+{% endblock %}
+
+{% block content %}
+{% if not dashboard %}
+    {% component "unfold/components/card.html" with title="Dashboard unavailable" %}
+        <p class="text-subtle">
+            The dashboard figures could not be loaded. The records themselves are
+            unaffected &mdash; use the sidebar. The error has been logged.
+        </p>
+    {% endcomponent %}
+{% else %}
+
+{# ---------- Row 1: operations ---------- #}
+<h2 class="font-semibold mb-4 text-font-important-light dark:text-font-important-dark">
+    {% translate "Operations" %}
+</h2>
+<div class="grid gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-4">
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "Patients" %}</p>
+        <p class="font-semibold text-2xl mt-1">{{ dashboard.operations.patients }}</p>
+    {% endcomponent %}
+
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "Checks today" %}</p>
+        <p class="font-semibold text-2xl mt-1">{{ dashboard.operations.assessments_today }}</p>
+    {% endcomponent %}
+
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "Checks, all time" %}</p>
+        <p class="font-semibold text-2xl mt-1">{{ dashboard.operations.assessments_total }}</p>
+    {% endcomponent %}
+
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "Anonymous" %}</p>
+        <p class="font-semibold text-2xl mt-1">{{ dashboard.operations.anonymous_share }}%</p>
+        <p class="text-subtle text-xs mt-1">
+            {% translate "checks run without giving any details" %}
+        </p>
+    {% endcomponent %}
+</div>
+
+{# ---------- Row 2: clinical safety ---------- #}
+<h2 class="font-semibold mb-4 text-font-important-light dark:text-font-important-dark">
+    {% translate "Clinical safety" %}
+</h2>
+<div class="grid gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-4">
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">
+            {% translate "Awaiting clinician review" %}
+        </p>
+        <p class="font-semibold text-2xl mt-1">{{ dashboard.clinical_safety.awaiting_review }}</p>
+        <p class="text-subtle text-xs mt-1">
+            {% translate "AI drafts, unreviewed" %}
+        </p>
+    {% endcomponent %}
+
+    {# The ageing indicator. Per AUDIT 8.5 this, not the raw backlog, is "the #}
+    {# number that matters". Amber, with the label carrying the meaning.      #}
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">
+            {% translate "Overdue review" %}
+        </p>
+        <p class="font-semibold text-2xl mt-1 {% if dashboard.clinical_safety.overdue_review %}text-amber-600 dark:text-amber-400{% endif %}">
+            {{ dashboard.clinical_safety.overdue_review }}
+        </p>
+        <p class="text-subtle text-xs mt-1">
+            {% blocktranslate with hours=dashboard.clinical_safety.review_sla_hours %}
+                unreviewed beyond {{ hours }}h
+            {% endblocktranslate %}
+        </p>
+    {% endcomponent %}
+
+    {# Red here means clinical danger, which is the one thing it is for. #}
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">
+            {% translate "Urgent this week" %}
+        </p>
+        <p class="font-semibold text-2xl mt-1 {% if dashboard.clinical_safety.urgent_this_week %}text-red-600 dark:text-red-400{% endif %}">
+            {{ dashboard.clinical_safety.urgent_this_week }}
+        </p>
+        <p class="text-subtle text-xs mt-1">{% translate "see a doctor today" %}</p>
+    {% endcomponent %}
+
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">
+            {% translate "Escalation rate" %}
+        </p>
+        <p class="font-semibold text-2xl mt-1">{{ dashboard.clinical_safety.escalation_rate }}%</p>
+        <p class="text-subtle text-xs mt-1">
+            {% blocktranslate with n=dashboard.clinical_safety.abstained_this_week %}
+                {{ n }} abstained this week
+            {% endblocktranslate %}
+        </p>
+    {% endcomponent %}
+</div>
+
+{# ---------- Row 3: compliance ---------- #}
+<h2 class="font-semibold mb-4 text-font-important-light dark:text-font-important-dark">
+    {% translate "Compliance" %}
+</h2>
+<div class="grid gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-4">
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "Consent active" %}</p>
+        <p class="font-semibold text-2xl mt-1">{{ dashboard.compliance.consent_active }}</p>
+    {% endcomponent %}
+
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "Consent withdrawn" %}</p>
+        <p class="font-semibold text-2xl mt-1">{{ dashboard.compliance.consent_withdrawn }}</p>
+        <p class="text-subtle text-xs mt-1">{% translate "records erased on request" %}</p>
+    {% endcomponent %}
+
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">
+            {% translate "Approaching retention" %}
+        </p>
+        <p class="font-semibold text-2xl mt-1 {% if dashboard.compliance.approaching_retention %}text-amber-600 dark:text-amber-400{% endif %}">
+            {{ dashboard.compliance.approaching_retention }}
+        </p>
+        <p class="text-subtle text-xs mt-1">
+            {% translate "notice due before erasure" %}
+        </p>
+    {% endcomponent %}
+
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "Past retention" %}</p>
+        <p class="font-semibold text-2xl mt-1 {% if dashboard.compliance.past_retention %}text-amber-600 dark:text-amber-400{% endif %}">
+            {{ dashboard.compliance.past_retention }}
+        </p>
+        <p class="text-subtle text-xs mt-1">
+            {% blocktranslate with years=dashboard.compliance.retention_years %}
+                older than {{ years }} years
+            {% endblocktranslate %}
+        </p>
+    {% endcomponent %}
+</div>
+
+{# ---------- Charts ---------- #}
+<div class="grid gap-4 mb-8 lg:grid-cols-2">
+    {% component "unfold/components/card.html" with title="Checks per day" description="Last 30 days" %}
+        {% if dashboard.charts.assessments_per_day %}
+            <div class="flex flex-col gap-1">
+                {% for row in dashboard.charts.assessments_per_day %}
+                    <div class="flex gap-3 items-center text-xs">
+                        <span class="text-subtle w-24 shrink-0 font-mono">{{ row.day }}</span>
+                        <span class="bg-primary-600 h-2 rounded-full" style="width: {% widthratio row.count 1 8 %}px; min-width: 2px;"></span>
+                        <span class="text-subtle font-mono">{{ row.count }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-subtle text-sm">{% translate "No checks recorded yet." %}</p>
+        {% endif %}
+    {% endcomponent %}
+
+    {% component "unfold/components/card.html" with title="Urgency mix" description="Is the model over-triaging?" %}
+        {% if dashboard.charts.urgency_mix %}
+            <div class="flex flex-col gap-2">
+                {% for row in dashboard.charts.urgency_mix %}
+                    <div class="flex gap-3 items-center text-xs">
+                        <span class="text-subtle w-44 shrink-0">{{ row.label }}</span>
+                        <span class="h-2 rounded-full
+                            {% if row.level == 'urgent' %}bg-red-600{% elif row.level == 'consult' %}bg-amber-600{% elif row.level == 'routine' %}bg-primary-600{% else %}bg-base-400{% endif %}"
+                            style="width: {% widthratio row.count 1 8 %}px; min-width: 2px;"></span>
+                        <span class="text-subtle font-mono">{{ row.count }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+            <p class="text-subtle text-xs mt-4">
+                {% translate "Over-triage is the correct safety posture for a self-triage tool, so a high escalation share is expected, not a fault." %}
+            </p>
+        {% else %}
+            <p class="text-subtle text-sm">{% translate "No checks recorded yet." %}</p>
+        {% endif %}
+    {% endcomponent %}
+</div>
+
+<div class="grid gap-4 mb-8 lg:grid-cols-2">
+    {% component "unfold/components/card.html" with title="Most suggested conditions" description="Top 10, all time" %}
+        {% if dashboard.charts.top_conditions %}
+            <div class="flex flex-col gap-2">
+                {% for row in dashboard.charts.top_conditions %}
+                    <div class="flex gap-3 items-center text-xs">
+                        <span class="text-subtle grow">{{ row.disease }}</span>
+                        <span class="font-mono font-semibold">{{ row.count }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-subtle text-sm">{% translate "No named conditions yet." %}</p>
+        {% endif %}
+    {% endcomponent %}
+
+    {# Named rather than faked. A tile showing a hardcoded zero reads as       #}
+    {# "nothing to worry about" when it means "not measured" (AUDIT 8.5).      #}
+    {% component "unfold/components/card.html" with title="Not measured yet" description="Tiles the audit specifies that need later phases" %}
+        <ul class="flex flex-col gap-2 text-xs text-subtle">
+            {% for tile in dashboard.pending_tiles %}
+                <li class="flex gap-2">
+                    <span class="material-symbols-outlined text-base">schedule</span>
+                    <span>{{ tile }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+        <p class="text-subtle text-xs mt-4">
+            {% translate "These are deliberately absent rather than shown as zero." %}
+        </p>
+    {% endcomponent %}
+</div>
+
+<p class="text-subtle text-xs">
+    {% blocktranslate with ts=dashboard.generated_at %}Figures generated {{ ts }}, cached for 60 seconds.{% endblocktranslate %}
+</p>
+
+{% endif %}
+{% endblock %}

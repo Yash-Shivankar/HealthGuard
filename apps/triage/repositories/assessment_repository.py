@@ -36,3 +36,87 @@ class AssessmentRepository:
             .filter(review_state=ReviewState.UNREVIEWED)
             .order_by("created_at")
         )
+
+    # --- Aggregates for the operations dashboard (AUDIT 8.5) ---------------
+    #
+    # Every query below is covered by an index declared on TriageAssessment:
+    # -created_at, (review_state, -created_at) and (urgency_level, -created_at).
+    # The audit's warning is explicit - "the dashboard must not run twelve
+    # unindexed aggregate queries on every page load".
+
+    @staticmethod
+    def count() -> int:
+        return TriageAssessment.objects.count()
+
+    @staticmethod
+    def count_since(cutoff) -> int:
+        return TriageAssessment.objects.filter(created_at__gte=cutoff).count()
+
+    @staticmethod
+    def count_anonymous() -> int:
+        return TriageAssessment.objects.filter(patient__isnull=True).count()
+
+    @staticmethod
+    def count_unreviewed() -> int:
+        return TriageAssessment.objects.filter(
+            review_state=ReviewState.UNREVIEWED
+        ).count()
+
+    @staticmethod
+    def count_unreviewed_older_than(cutoff) -> int:
+        """The ageing indicator: unreviewed beyond the SLA is the number that
+        matters, not the raw backlog (AUDIT 8.5).
+        """
+        return TriageAssessment.objects.filter(
+            review_state=ReviewState.UNREVIEWED, created_at__lt=cutoff
+        ).count()
+
+    @staticmethod
+    def count_since_by_urgency(cutoff, levels: list[str]) -> int:
+        return TriageAssessment.objects.filter(
+            created_at__gte=cutoff, urgency_level__in=levels
+        ).count()
+
+    @staticmethod
+    def count_abstained_since(cutoff) -> int:
+        return TriageAssessment.objects.filter(
+            created_at__gte=cutoff, abstained=True
+        ).count()
+
+    @staticmethod
+    def daily_counts_since(cutoff) -> list[dict]:
+        from django.db.models import Count
+        from django.db.models.functions import TruncDate
+
+        return list(
+            TriageAssessment.objects.filter(created_at__gte=cutoff)
+            .annotate(day=TruncDate("created_at"))
+            .values("day")
+            .annotate(count=Count("pk"))
+            .order_by("day")
+        )
+
+    @staticmethod
+    def counts_by_urgency() -> list[dict]:
+        from django.db.models import Count
+
+        return list(
+            TriageAssessment.objects.values("urgency_level")
+            .annotate(count=Count("pk"))
+            .order_by("-count")
+        )
+
+    @staticmethod
+    def named_differentials() -> list[list]:
+        """Stored differentials for assessments that named a condition.
+
+        Returns the raw JSON so the caller can rank in Python. A JSON-path
+        aggregate would be faster but would tie the dashboard to Postgres
+        while tests run on SQLite; revisit when the table is large enough to
+        justify the coupling.
+        """
+        return list(
+            TriageAssessment.objects.filter(abstained=False).values_list(
+                "differential", flat=True
+            )
+        )

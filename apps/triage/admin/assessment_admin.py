@@ -1,27 +1,43 @@
 """ModelAdmin for TriageAssessment - the prediction log (AUDIT 8.4, 8.5).
 
-Read-only on the clinical fields. A finalised assessment is append-only: a
-correction is a new record with a reason, never an edit of the original. That
-is what an auditor expects to see (AUDIT 8.6).
+Append-only on the clinical fields: a finalised assessment is not edited, and
+a correction is a new record with a reason. That is what an auditor expects to
+see (8.6).
+
+The one field staff *can* change is ``review_state``, because clinician
+sign-off is the whole point of recording these. Every transition is captured
+by ``simple_history``.
 """
 
-from django.contrib import admin
-from django.utils.html import format_html
+from __future__ import annotations
 
+from django.contrib import admin, messages
+from simple_history.admin import SimpleHistoryAdmin
+from unfold.decorators import display
+
+from apps.audit.models import AuditAction
+from apps.audit.services.audit_service import AuditService
 from apps.triage.models import ReviewState, TriageAssessment, UrgencyLevel
+from common.admin import AuditedModelAdmin
 
-# Urgency colours. Red is reserved for clinical danger and is used nowhere
-# else in this project (AUDIT 8.3).
-_URGENCY_COLOURS = {
-    UrgencyLevel.URGENT: "#dc2626",
-    UrgencyLevel.CONSULT: "#b45309",
-    UrgencyLevel.ROUTINE: "#15803d",
-    UrgencyLevel.UNKNOWN: "#52606d",
+# Unfold label variants. Red is reserved for clinical danger and appears
+# nowhere else in this project - not on delete, not on cancel (AUDIT 8.3).
+_URGENCY_LABELS = {
+    UrgencyLevel.URGENT.label: "danger",
+    UrgencyLevel.CONSULT.label: "warning",
+    UrgencyLevel.ROUTINE.label: "success",
+    UrgencyLevel.UNKNOWN.label: "info",
+}
+
+_REVIEW_LABELS = {
+    ReviewState.UNREVIEWED.label: "warning",
+    ReviewState.REVIEWED.label: "success",
+    ReviewState.CORRECTED.label: "info",
 }
 
 
 @admin.register(TriageAssessment)
-class TriageAssessmentAdmin(admin.ModelAdmin):
+class TriageAssessmentAdmin(AuditedModelAdmin, SimpleHistoryAdmin):
     list_display = (
         "created_at",
         "patient_display",
@@ -37,6 +53,14 @@ class TriageAssessmentAdmin(admin.ModelAdmin):
     # Without this the patient column is an N+1 on every page load, which is
     # the number one cause of "the admin is slow" (AUDIT 8.6).
     list_select_related = ("patient",)
+    # A <select> rendering 50,000 patients would hang the browser (8.6). The
+    # autocomplete endpoint resolves through PatientAdmin.get_queryset, which
+    # is a ScopedModelAdmin - that is the leak in 8.7 point 4, closed, and
+    # asserted in common/tests/test_admin_scoping.py.
+    autocomplete_fields = ("patient",)
+    tenant_scoped_fks = ("patient",)
+
+    tenant_field = None  # Phase 4: "clinic_id"
 
     readonly_fields = (
         "patient",
@@ -54,11 +78,19 @@ class TriageAssessmentAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("Input", {"fields": ("patient", "symptoms", "days")}),
-        ("Output", {"fields": ("abstained", "differential", "urgency_level", "urgency_score")}),
+        (
+            "Output",
+            {"fields": ("abstained", "differential", "urgency_level", "urgency_score")},
+        ),
         (
             "Provenance",
             {
-                "fields": ("model_fingerprint", "model_trained_at", "abstain_threshold", "created_at"),
+                "fields": (
+                    "model_fingerprint",
+                    "model_trained_at",
+                    "abstain_threshold",
+                    "created_at",
+                ),
                 "description": "Which model produced this result. Required for "
                 "traceability under the CDSCO MDSW guidance.",
             },
@@ -68,36 +100,41 @@ class TriageAssessmentAdmin(admin.ModelAdmin):
             {
                 "fields": ("review_state",),
                 "description": "Every AI output needs clinician sign-off before "
-                "it enters a record (Telemedicine Practice Guidelines 2020).",
+                "it enters a record (Telemedicine Practice Guidelines 2020). "
+                "Each transition is recorded in this record's history.",
             },
         ),
     )
 
-    @admin.display(description="Patient")
+    actions = ["mark_reviewed"]
+
+    @display(description="Patient")
     def patient_display(self, obj: TriageAssessment) -> str:
         return str(obj.patient) if obj.patient_id else "Anonymous"
 
-    @admin.display(description="Outcome")
+    @display(description="Outcome")
     def outcome(self, obj: TriageAssessment) -> str:
         if obj.abstained:
             return "Abstained - no condition named"
         confidence = obj.top_confidence
-        return f"{obj.top_disease} ({confidence:.0%} match)" if confidence else str(obj.top_disease)
+        if confidence is None:
+            return str(obj.top_disease)
+        # "symptom match", never "confident": on this dataset a textbook
+        # presentation returns a unanimous vote, and calling that confidence
+        # would put back the false certainty the audit set out to remove.
+        return f"{obj.top_disease} ({confidence:.0%} symptom match)"
 
-    @admin.display(description="Urgency", ordering="urgency_level")
+    @display(description="Urgency", ordering="urgency_level", label=_URGENCY_LABELS)
     def urgency_badge(self, obj: TriageAssessment) -> str:
-        colour = _URGENCY_COLOURS.get(obj.urgency_level, "#52606d")
-        return format_html(
-            '<span style="color:{};">{}</span>', colour, obj.get_urgency_level_display()
-        )
+        return obj.get_urgency_level_display()
 
-    @admin.display(description="Review", ordering="review_state")
+    @display(description="Review", ordering="review_state", label=_REVIEW_LABELS)
     def review_badge(self, obj: TriageAssessment) -> str:
-        if obj.review_state == ReviewState.UNREVIEWED:
-            # Violet for "AI draft, unreviewed" - a distinct, consistently
-            # applied state, which is how the sign-off requirement gets
-            # enforced in practice rather than remembered (AUDIT 8.3).
-            return format_html('<span style="color:#7c3aed;">{}</span>', obj.get_review_state_display())
+        """A distinct, consistently applied "unreviewed" state.
+
+        AUDIT 8.3 calls this a compliance control, not decoration: it is how
+        the sign-off requirement gets enforced in practice.
+        """
         return obj.get_review_state_display()
 
     def has_add_permission(self, request) -> bool:
@@ -106,3 +143,40 @@ class TriageAssessmentAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None) -> bool:
         return False
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        actions.pop("delete_selected", None)
+        return actions
+
+    @admin.action(description="Mark as reviewed by a clinician")
+    def mark_reviewed(self, request, queryset):
+        """Sign-off, recorded.
+
+        Iterates rather than calling .update() so each row goes through
+        save(), which is what creates the history entry. A bulk update would
+        change the state and leave no trail of who signed it off - which is
+        the opposite of the point.
+        """
+        audit = AuditService()
+        signed = 0
+
+        for assessment in queryset.filter(review_state=ReviewState.UNREVIEWED):
+            assessment.review_state = ReviewState.REVIEWED
+            assessment.save(update_fields=["review_state"])
+            audit.record(
+                action=AuditAction.UPDATE,
+                actor=request.user,
+                obj=assessment,
+                request=request,
+                reason="clinician sign-off",
+            )
+            signed += 1
+
+        self.message_user(
+            request,
+            f"Marked {signed} assessment(s) as reviewed."
+            if signed
+            else "No unreviewed assessments were selected.",
+            messages.SUCCESS if signed else messages.WARNING,
+        )

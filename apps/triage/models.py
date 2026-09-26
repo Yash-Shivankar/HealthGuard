@@ -22,6 +22,7 @@ symptom history tied to a person is health data about that person.
 from __future__ import annotations
 
 from django.db import models
+from simple_history.models import HistoricalRecords
 
 
 class ReviewState(models.TextChoices):
@@ -77,6 +78,11 @@ class TriageAssessment(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # Records the review_state transitions, which is the clinician sign-off
+    # trail TPG 2020 expects (AUDIT 8.9). Cascades with the patient for the
+    # same reason the patient's own history does.
+    history = HistoricalRecords(cascade_delete_history=True)
 
     class Meta:
         verbose_name = "Triage assessment"

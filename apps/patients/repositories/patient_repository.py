@@ -49,3 +49,19 @@ class PatientRepository:
     @staticmethod
     def exists(patient_id: int) -> bool:
         return Patient.objects.filter(pk=patient_id).exists()
+
+    # --- Aggregates for the operations dashboard (AUDIT 8.5) ---------------
+
+    @staticmethod
+    def count() -> int:
+        return Patient.objects.count()
+
+    @staticmethod
+    def count_created_before(cutoff) -> int:
+        """Patients whose records are approaching or past the retention limit.
+
+        Covered by the ``-created_at`` index, so this stays cheap as the table
+        grows. The DPDP Rules require notice *before* erasure, so these have to
+        be visible ahead of the deadline, not after it.
+        """
+        return Patient.objects.filter(created_at__lt=cutoff).count()

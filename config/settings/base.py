@@ -14,6 +14,7 @@ Audit references:
   11.1  Postgres is the target; DATABASE_URL makes it a config change
 """
 
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -32,6 +33,10 @@ env = environ.Env(
     DJANGO_SECURE_SSL_REDIRECT=(bool, True),
     DJANGO_SECURE_HSTS_SECONDS=(int, 31536000),
     DJANGO_ADMIN_URL=(str, "internal-ops/"),
+    ADMIN_IP_ALLOWLIST=(list, []),
+    ADMIN_SESSION_TIMEOUT_SECONDS=(int, 900),
+    AXES_FAILURE_LIMIT=(int, 5),
+    AXES_COOLOFF_MINUTES=(int, 30),
     DJANGO_LOG_FORMAT=(str, "console"),
     DJANGO_LOG_LEVEL=(str, "INFO"),
     TRIAGE_ABSTAIN_THRESHOLD=(float, 0.40),
@@ -46,9 +51,36 @@ DEBUG = env("DJANGO_DEBUG")
 ALLOWED_HOSTS = env("DJANGO_ALLOWED_HOSTS")
 ADMIN_URL = env("DJANGO_ADMIN_URL")
 
+# --- Admin hardening (AUDIT 8.10) -------------------------------------------
+# Empty means no network restriction. AUDIT 11.7 (will ops be on a fixed IP?)
+# is unanswered, so this cannot be enabled by default without risking locking
+# the owner out of their own admin.
+ADMIN_IP_ALLOWLIST = env("ADMIN_IP_ALLOWLIST")
+# An admin session is a skeleton key to every patient record; 15 minutes of
+# inactivity is deliberately shorter than an ordinary session.
+ADMIN_SESSION_TIMEOUT_SECONDS = env("ADMIN_SESSION_TIMEOUT_SECONDS")
+
 # --- Applications -----------------------------------------------------------
+# Unfold must come *before* django.contrib.admin so its templates win
+# (AUDIT 8.11, step 1). unfold.contrib.* add filter and form widgets.
+#
+# BasicAppConfig, not plain "unfold": Unfold's DefaultAppConfig.ready()
+# unconditionally assigns `admin.site = UnfoldAdminSite()`, which silently
+# clobbers the custom site set through AdminConfig.default_site - taking the
+# HealthGuard branding and, more seriously, the 2FA gate in
+# HealthGuardAdminSite.has_permission with it. BasicAppConfig loads the
+# templates and widgets without replacing the site.
+UNFOLD_APPS = [
+    "unfold.apps.BasicAppConfig",
+    "unfold.contrib.filters",
+    "unfold.contrib.forms",
+    "unfold.contrib.simple_history",
+]
+
 DJANGO_APPS = [
-    "django.contrib.admin",
+    # config.apps.HealthGuardAdminConfig rather than django.contrib.admin, so
+    # admin.site is the HealthGuard site and @admin.register targets it.
+    "config.apps.HealthGuardAdminConfig",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -60,6 +92,17 @@ THIRD_PARTY_APPS = [
     "rest_framework",
     "django_filters",
     "drf_spectacular",
+    # Full per-change snapshots on clinical models (AUDIT 8.9). The storage
+    # cost against django-auditlog's leaner diffs is the trade-off; for
+    # compliance work, showing an auditor the complete record as it stood on a
+    # given date is worth the disk.
+    "simple_history",
+    # Login rate limiting and lockout (AUDIT 8.10).
+    "axes",
+    # 2FA for staff accounts (AUDIT 8.10).
+    "django_otp",
+    "django_otp.plugins.otp_totp",
+    "django_otp.plugins.otp_static",
 ]
 
 # One app per bounded context (AUDIT 7.1).  The apps that do not exist yet -
@@ -70,9 +113,12 @@ LOCAL_APPS = [
     "apps.patients",
     "apps.consent",
     "apps.triage",
+    # Read-access log. Django's LogEntry records changes only, and reading a
+    # patient record is the event that matters under DPDP (AUDIT 8.9).
+    "apps.audit",
 ]
 
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+INSTALLED_APPS = UNFOLD_APPS + DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -80,11 +126,29 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Must follow AuthenticationMiddleware: it upgrades request.user with the
+    # verified-device state that admin 2FA checks (AUDIT 8.10).
+    "django_otp.middleware.OTPMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Optional network restriction in front of the admin. Off unless
+    # ADMIN_IP_ALLOWLIST is set - AUDIT 11.7 (will ops be on a fixed IP?) is
+    # still unanswered, so this cannot be switched on by default.
+    "common.middleware.admin_ip_allowlist.AdminIPAllowlistMiddleware",
+    # Session age limit for staff sessions, shorter than for patients.
+    "common.middleware.admin_session.AdminSessionTimeoutMiddleware",
     # Attaches a request id to every log line emitted while handling a request,
     # so a report of "it broke at 14:32" can be traced (AUDIT 2.13).
     "common.middleware.request_id.RequestIDMiddleware",
+    # Must be last: it wraps authentication to count and block failures.
+    "axes.middleware.AxesMiddleware",
+]
+
+# AxesStandaloneBackend must come first so a locked-out account is refused
+# before any credential check runs.
+AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesStandaloneBackend",
+    "django.contrib.auth.backends.ModelBackend",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -244,3 +308,35 @@ LOGGING = {
         "apps": {"handlers": ["console"], "level": LOG_LEVEL, "propagate": False},
     },
 }
+
+
+# --- Login lockout: django-axes (AUDIT 8.10) --------------------------------
+AXES_FAILURE_LIMIT = env("AXES_FAILURE_LIMIT")
+AXES_COOLOFF_TIME = timedelta(minutes=env("AXES_COOLOFF_MINUTES"))
+# Lock on the username *and* the IP together. Locking on IP alone punishes
+# everyone behind a clinic's shared connection when one person mistypes;
+# locking on username alone lets an attacker lock a known account out
+# deliberately.
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
+AXES_RESET_ON_SUCCESS = True
+AXES_ENABLE_ACCESS_FAILURE_LOG = True
+# Never write the attempted password, not even hashed, into the attempt log.
+AXES_SENSITIVE_PARAMETERS = ["password", "otp_token"]
+AXES_VERBOSE = True
+
+# --- 2FA: django-otp (AUDIT 8.10) -------------------------------------------
+# "Mandatory 2FA for every staff account. No exceptions for 'just the ops
+# account.'" Enforcement lives in HealthGuardAdminSite.has_permission, so it
+# covers every admin view rather than relying on each one to remember.
+OTP_TOTP_ISSUER = "HealthGuard"
+# Off in development only, so a fresh clone can reach the admin before anyone
+# has enrolled a device. Production must leave this True.
+ADMIN_REQUIRE_2FA = env.bool("ADMIN_REQUIRE_2FA", default=True)
+
+# --- Simple history (AUDIT 8.9) ---------------------------------------------
+# Record which user made each change. Without this the history table shows
+# what changed but not who changed it, which is half an audit trail.
+SIMPLE_HISTORY_HISTORY_CHANGE_REASON_USE_TEXT_FIELD = True
+
+# --- Unfold admin theme (AUDIT 8.2-8.4) -------------------------------------
+from config.settings.unfold import UNFOLD  # noqa: E402,F401
