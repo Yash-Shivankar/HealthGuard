@@ -51,6 +51,27 @@ python manage.py seed_roles        # the four role groups and their permissions
 python manage.py runserver
 ```
 
+For a local account to sign in with:
+
+```bash
+python manage.py seed_dev_user
+```
+
+Creates `yashshivankar@outlook.com` as an owner of a "Development Clinic", with
+the password documented in the command. It is idempotent, so re-run it after
+resetting the database.
+
+Three things about it worth knowing. It **refuses to run unless `DEBUG=True`** —
+the account has a published password, and this system holds health records, so a
+known credential reaching a deployment would defeat the admin's 2FA gate, IP
+allowlist and lockout policy at once. It is deliberately **not a superuser**
+(AUDIT §8.8): a superuser is `unrestricted` and bypasses the tenancy scoping most
+of this application is built around, so testing with one means testing the path no
+real user takes. And it attaches a **clinic**, because tenancy fails closed — an
+account with no membership sees nothing, which looks broken rather than empty.
+
+Override the password with `DEV_USER_PASSWORD` in your `.env`, or `--password`.
+
 `seed_roles` is idempotent, so run it on every deploy. Roles defined in a
 migration drift the moment someone edits a group in the admin; re-asserting them
 from `backend/apps/accounts/management/commands/seed_roles.py` keeps that file the source
