@@ -55,6 +55,9 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         # A doctor sees whether a patient has an ABHA; linking one is a front-
         # desk task at registration, which is where M1 puts it.
         "abdm.view_abhalink",
+        # And which ABDM consents are live, because that determines what may
+        # be shared on a referral.
+        "abdm.view_hieconsentartefact",
     ),
     Role.OWNER: (
         "patients.view_patient",
@@ -71,6 +74,8 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "abdm.view_abhalink",
         "abdm.view_facilityregistration",
         "abdm.view_practitionerregistration",
+        "abdm.view_hieconsentartefact",
+        "abdm.view_healthinformationtransfer",
     ),
     Role.PLATFORM_OPS: (
         # Read-only on clinical data, across clinics.
@@ -95,6 +100,8 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "abdm.view_practitionerregistration",
         "abdm.change_practitionerregistration",
         "abdm.view_gatewaycall",
+        "abdm.view_hieconsentartefact",
+        "abdm.view_healthinformationtransfer",
     ),
 }
 

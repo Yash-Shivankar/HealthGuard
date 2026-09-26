@@ -6,10 +6,14 @@ from django.db.models import QuerySet
 
 from apps.abdm.models import (
     AbhaLink,
+    ConsentState,
     FacilityRegistration,
     GatewayCall,
+    HealthInformationTransfer,
+    HieConsentArtefact,
     PractitionerRegistration,
     RegistrationState,
+    TransferState,
 )
 
 
@@ -102,3 +106,66 @@ class GatewayCallRepository:
     @staticmethod
     def count_failed_since(cutoff) -> int:
         return GatewayCall.objects.filter(created_at__gte=cutoff, succeeded=False).count()
+
+
+class HieConsentRepository:
+    """ABDM consent artefacts. Distinct from apps.consent, which is DPDP."""
+
+    @staticmethod
+    def usable_for_patient(patient) -> QuerySet[HieConsentArtefact]:
+        """Granted, unrevoked and unexpired.
+
+        Expiry is applied in the query rather than trusted from ``state``: a
+        consent that lapsed reads ``granted`` until some job notices it.
+        """
+        from django.utils import timezone
+
+        return HieConsentArtefact.objects.filter(
+            patient=patient,
+            state=ConsentState.GRANTED,
+            revoked_at__isnull=True,
+            expires_at__gt=timezone.now(),
+        )
+
+    @staticmethod
+    def for_clinic(clinic) -> QuerySet[HieConsentArtefact]:
+        return HieConsentArtefact.objects.filter(clinic=clinic).select_related("patient")
+
+    @staticmethod
+    def count_usable() -> int:
+        from django.utils import timezone
+
+        return HieConsentArtefact.objects.filter(
+            state=ConsentState.GRANTED,
+            revoked_at__isnull=True,
+            expires_at__gt=timezone.now(),
+        ).count()
+
+
+class TransferRepository:
+    @staticmethod
+    def create(**fields) -> HealthInformationTransfer:
+        return HealthInformationTransfer.objects.create(**fields)
+
+    @staticmethod
+    def save(transfer: HealthInformationTransfer, fields: list[str]) -> None:
+        transfer.save(update_fields=fields)
+
+    @staticmethod
+    def for_clinic(clinic) -> QuerySet[HealthInformationTransfer]:
+        return HealthInformationTransfer.objects.filter(clinic=clinic)
+
+    @staticmethod
+    def count_sent_since(cutoff) -> int:
+        """Feeds the "records pushed" dashboard tile the audit asks for - the
+        DHIS incentive is paid on record volume (AUDIT 8.5).
+        """
+        return HealthInformationTransfer.objects.filter(
+            state=TransferState.SENT, sent_at__gte=cutoff
+        ).count()
+
+    @staticmethod
+    def count_failed_since(cutoff) -> int:
+        return HealthInformationTransfer.objects.filter(
+            state=TransferState.FAILED, created_at__gte=cutoff
+        ).count()

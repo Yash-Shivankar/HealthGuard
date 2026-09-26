@@ -28,6 +28,9 @@ django-simple-history==3.13.0
 django-axes==8.3.1
 django-otp==1.7.3
 qrcode==8.2
+# X25519 + AES-GCM for HIP-to-HIU transfer (AUDIT 4.2 M2). Every primitive
+# comes from here: no custom padding, no hand-written cipher mode.
+cryptography==46.0.3
 
 # --- Database ---
 # psycopg 3. Postgres is the target (11.1); DATABASE_URL still allows SQLite

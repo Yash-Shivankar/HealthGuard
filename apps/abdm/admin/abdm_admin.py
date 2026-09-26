@@ -16,6 +16,8 @@ from apps.abdm.models import (
     AbhaLink,
     FacilityRegistration,
     GatewayCall,
+    HealthInformationTransfer,
+    HieConsentArtefact,
     PractitionerRegistration,
     RegistrationState,
 )
@@ -176,3 +178,93 @@ class GatewayCallAdmin(ReadOnlyModelAdmin):
         than incomplete.
         """
         return "Simulated" if obj.simulated else "Live"
+
+
+# ---------------------------------------------------------------------------
+# M2: consent and transfers
+# ---------------------------------------------------------------------------
+
+_CONSENT_LABELS = {
+    "Granted": "success",
+    "Requested": "info",
+    "Denied": "warning",
+    "Revoked": "warning",
+    "Expired": "warning",
+}
+
+
+@admin.register(HieConsentArtefact)
+class HieConsentArtefactAdmin(ReadOnlyModelAdmin):
+    """ABDM consent artefacts.
+
+    Read-only: these are issued by the Consent Manager, not by us. A consent
+    someone could edit here would be a consent we invented, and the whole point
+    of the artefact is that the patient granted it through the network.
+
+    Note the verbose name distinguishes this from apps.consent - they are
+    different objects and conflating them would be a disclosure without a
+    lawful basis. See the comment above the model.
+    """
+
+    list_display = (
+        "consent_id", "patient", "requester_name", "state_label",
+        "usable", "expires_at",
+    )
+    list_filter = ("state", "clinic", "expires_at")
+    search_fields = ("consent_id", "requester_id", "patient__name")
+    list_select_related = ("patient", "clinic")
+    date_hierarchy = "expires_at"
+    ordering = ("-created_at",)
+    tenant_field = "clinic_id"
+
+    @display(description="State", ordering="state", label=_CONSENT_LABELS)
+    def state_label(self, obj: HieConsentArtefact) -> str:
+        return obj.get_state_display()
+
+    @display(description="Usable now", boolean=True)
+    def usable(self, obj: HieConsentArtefact) -> bool:
+        """Evaluated live rather than read from `state`.
+
+        A consent that lapsed five minutes ago still reads `granted` until some
+        job notices, and this column is the one that tells the truth.
+        """
+        return obj.is_usable
+
+
+@admin.register(HealthInformationTransfer)
+class HealthInformationTransferAdmin(ReadOnlyModelAdmin):
+    """The record of what was shared, and under which consent.
+
+    The bundle itself is not here - only a hash of it. Storing the document
+    would be a second copy of clinical data outside the erasure path, so there
+    is deliberately nothing to read on this screen except the fact of the
+    transfer.
+    """
+
+    list_display = (
+        "created_at", "transaction_id", "consent", "state_label",
+        "entry_count", "short_hash",
+    )
+    list_filter = ("state", "clinic", "created_at")
+    search_fields = ("transaction_id", "bundle_sha256")
+    list_select_related = ("consent", "clinic")
+    date_hierarchy = "created_at"
+    ordering = ("-created_at",)
+    tenant_field = "clinic_id"
+
+    @display(
+        description="State",
+        ordering="state",
+        label={"Sent": "success", "Pending": "info", "Failed": "warning"},
+    )
+    def state_label(self, obj: HealthInformationTransfer) -> str:
+        return obj.get_state_display()
+
+    @display(description="Bundle hash")
+    def short_hash(self, obj: HealthInformationTransfer) -> str:
+        """First twelve characters, monospaced in the detail view.
+
+        Enough to compare by eye against a receiver's record, which is what
+        this field is for; the full value is on the detail page.
+        """
+        return obj.bundle_sha256[:12] or "-"

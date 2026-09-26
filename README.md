@@ -290,9 +290,11 @@ measurable.
       in; per-action re-auth is not.
 - [ ] Route `event=admin_superuser_login` to a channel a human reads. The log
       line exists; the alert rule is a deployment step.
-- [ ] **Obtain ABDM sandbox access** (§11.3) and verify every constant in
-      `apps/abdm/services/endpoints.py` against it. M1 is built but unverified
-      end to end, and sandbox certification cannot start without this.
+- [ ] **Obtain ABDM sandbox access** (§11.3) and verify against it: every
+      constant in `apps/abdm/services/endpoints.py`, the encryption envelope in
+      `apps/abdm/services/crypto.py`, and whether the bundles satisfy the NDHM
+      FHIR profile (grep `ABDM-SPECIFIC: verify`). M1 and M2 are built but
+      unverified end to end, and certification cannot start without this.
 - [ ] Get clinical sign-off on the urgency thresholds in
       `prediction_app/services/triage.py`. They are inherited magic numbers
       with no clinical basis, documented as such in the module.
@@ -303,10 +305,11 @@ measurable.
       remedies row. It is deliberately **not** aliased to the `Hypothyroidism`
       row, because they are different diseases.
 
-## ABDM (M1)
+## ABDM (M1 and M2)
 
-ABHA linkage, HFR facility registration, HPR practitioner registration and
-Scan-&-Share, in `apps/abdm/`.
+M1 — ABHA linkage, HFR and HPR registration, Scan-&-Share.
+M2 — FHIR R4 document bundles, encrypted HIP↔HIU transfer, HIE-CM consent.
+Both in `apps/abdm/`, with the generic FHIR layer in `utils/fhir/`.
 
 ```bash
 python manage.py abdm_status     # which mode you are in, and what is registered
@@ -345,6 +348,43 @@ Three rules the code enforces:
 Every outbound call is recorded — operation, status, timing, correlation id —
 with **no request or response bodies**, for the same reason the access log holds
 none: a second copy of every record outside the erasure path.
+
+### M2: sharing records
+
+**FHIR R4 is a published standard, so that layer is genuinely verified.**
+`utils/fhir/` builds document bundles and validates them structurally: the
+Composition is first, every `urn:uuid:` reference resolves inside the bundle, no
+duplicate ids, required elements present. What is *not* covered is the NDHM
+Implementation Guide's profile constraints on top of base FHIR — those are
+marked `# ABDM-SPECIFIC: verify` so the set is greppable.
+
+The mapping is where a clinical claim could quietly get upgraded, so it does
+not: a Condition is `unconfirmed` unless a clinician signed off, the symptoms
+travel as their own Observation so a receiving clinician can work from the
+evidence without trusting the model, no SNOMED code is invented for a free-text
+label, and where no clinician was involved the Composition's author is the
+**Organization** — never a fabricated Practitioner.
+
+**HIE-CM consent is not DPDP consent.** `apps.consent.ConsentArtefact` is our
+lawful basis to process. `abdm.HieConsentArtefact` is the patient's instruction,
+issued through the Consent Manager, authorising a named HIU to fetch specified
+categories for a specified period. Holding one does not grant the other, and
+treating either as the other would be a disclosure with no basis.
+
+Four checks gate every disclosure — usable consent, right category, right date
+range, and **right patient**. The last looks redundant and is the only one that
+catches assembling someone else's record under a valid consent.
+
+**Encryption** is X25519 → HKDF-SHA256 → AES-256-GCM, every primitive from
+`cryptography`. GCM authenticates, so a payload altered in transit fails to
+decrypt rather than decrypting to something plausible. Keys are ephemeral per
+transfer, and both sides contribute to the nonce — a nonce one party chooses
+alone is one that party can repeat, and a repeated GCM nonce is catastrophic.
+The crypto is fully tested; the **wire envelope is not**.
+
+Transfers store a SHA-256 of the bundle, never the bundle. That answers "was
+this exact document sent, under which consent?" without being a second copy of
+the clinical data.
 
 ## Regulatory position
 

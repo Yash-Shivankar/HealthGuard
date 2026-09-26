@@ -293,3 +293,193 @@ class GatewayCall(models.Model):
         if self.pk is not None:
             raise ValueError("GatewayCall is append-only and cannot be modified.")
         return super().save(*args, **kwargs)
+
+
+# ---------------------------------------------------------------------------
+# M2: HIE-CM consent and health information transfer
+# ---------------------------------------------------------------------------
+#
+# **HIE-CM consent is not DPDP consent, and the two must not be conflated.**
+#
+# ``apps.consent.ConsentArtefact`` is our lawful basis under the DPDP Act to
+# process someone's data at all. It is between the patient and us.
+#
+# ``HieConsentArtefact`` below is a different object entirely: it is the
+# patient's instruction, issued through the ABDM Consent Manager, authorising a
+# named Health Information User to fetch specified categories of their records
+# from a named Health Information Provider, for a specified period. It is
+# between the patient and the network, and we merely hold and honour it.
+#
+# Holding DPDP consent does not permit an ABDM disclosure, and an ABDM consent
+# artefact is not a lawful basis for anything else we do. Treating either as
+# the other would be a disclosure without a basis - which is precisely the kind
+# of error the audit's 4.1 table exists to prevent.
+
+
+class HiType(models.TextChoices):
+    """Categories of health information a consent can cover.
+
+    ABDM-SPECIFIC: verify. The set and the exact spellings come from the
+    published specification and have not been confirmed against a sandbox.
+    """
+
+    DIAGNOSTIC_REPORT = "DiagnosticReport", "Diagnostic report"
+    OP_CONSULTATION = "OPConsultation", "Outpatient consultation"
+    PRESCRIPTION = "Prescription", "Prescription"
+    DISCHARGE_SUMMARY = "DischargeSummary", "Discharge summary"
+    IMMUNIZATION_RECORD = "ImmunizationRecord", "Immunisation record"
+    HEALTH_DOCUMENT = "HealthDocumentRecord", "Health document"
+    WELLNESS_RECORD = "WellnessRecord", "Wellness record"
+
+
+class ConsentState(models.TextChoices):
+    REQUESTED = "requested", "Requested"
+    GRANTED = "granted", "Granted"
+    DENIED = "denied", "Denied"
+    REVOKED = "revoked", "Revoked"
+    EXPIRED = "expired", "Expired"
+
+
+class HieConsentArtefact(models.Model):
+    """A patient's ABDM consent for record sharing.
+
+    Scope is explicit and narrow by construction: which categories, which date
+    range, and until when. A consent with no expiry is a consent nobody can
+    withdraw by doing nothing, so ``expires_at`` is required.
+    """
+
+    patient = models.ForeignKey(
+        "patients.Patient",
+        on_delete=models.CASCADE,
+        related_name="hie_consents",
+        help_text="Cascades: an erased patient has no consents to honour.",
+    )
+    clinic = models.ForeignKey(
+        "accounts.Clinic",
+        on_delete=models.PROTECT,
+        related_name="hie_consents",
+        help_text="The HIP this consent is addressed to - us.",
+    )
+
+    # Issued by the Consent Manager; we do not mint these.
+    consent_id = models.CharField(max_length=128, blank=True, db_index=True)
+    #: Who is allowed to fetch. Free text because a HIU id is opaque to us.
+    requester_id = models.CharField(max_length=128)
+    requester_name = models.CharField(max_length=200, blank=True)
+
+    state = models.CharField(
+        max_length=16, choices=ConsentState.choices, default=ConsentState.REQUESTED
+    )
+    #: Which categories. A list rather than a single value: a consent commonly
+    #: covers several, and storing them separately would misrepresent it as
+    #: several consents.
+    hi_types = models.JSONField(default=list)
+
+    #: The clinical date range the consent covers - which records, not when the
+    #: consent is valid.
+    records_from = models.DateTimeField(null=True, blank=True)
+    records_to = models.DateTimeField(null=True, blank=True)
+
+    granted_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(
+        help_text="Required. A consent with no expiry cannot lapse on its own."
+    )
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "ABDM consent artefact (HIE-CM)"
+        verbose_name_plural = "ABDM consent artefacts (HIE-CM)"
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=["clinic", "state"]),
+            models.Index(fields=["state", "expires_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"ABDM consent {self.consent_id or self.pk} ({self.get_state_display()})"
+
+    @property
+    def is_expired(self) -> bool:
+        return timezone.now() >= self.expires_at
+
+    @property
+    def is_usable(self) -> bool:
+        """Granted, not revoked, and not past its expiry.
+
+        Expiry is checked live rather than trusting ``state``: a consent that
+        lapsed five minutes ago is still ``granted`` in the database until some
+        job notices, and honouring it in the meantime would be a disclosure
+        without a basis.
+        """
+        return (
+            self.state == ConsentState.GRANTED
+            and self.revoked_at is None
+            and not self.is_expired
+        )
+
+    def covers(self, hi_type: str) -> bool:
+        return hi_type in (self.hi_types or [])
+
+    def covers_date(self, moment) -> bool:
+        if self.records_from and moment < self.records_from:
+            return False
+        if self.records_to and moment > self.records_to:
+            return False
+        return True
+
+
+class TransferState(models.TextChoices):
+    PENDING = "pending", "Pending"
+    SENT = "sent", "Sent"
+    FAILED = "failed", "Failed"
+
+
+class HealthInformationTransfer(models.Model):
+    """One push of records to a HIU under a consent.
+
+    The bundle itself is **not stored here.** It is assembled, encrypted and
+    sent; what remains is the fact of the transfer, the consent that permitted
+    it, and a hash of what was sent. Keeping the bundle would be a second copy
+    of clinical data outside the erasure path - the same mistake the access log
+    and the gateway call record both avoid.
+
+    The hash is what makes the record useful without the content: it answers
+    "was this exact document sent, and under which consent?" without being the
+    document.
+    """
+
+    consent = models.ForeignKey(
+        HieConsentArtefact, on_delete=models.CASCADE, related_name="transfers"
+    )
+    clinic = models.ForeignKey(
+        "accounts.Clinic", on_delete=models.PROTECT, related_name="hi_transfers"
+    )
+
+    transaction_id = models.CharField(max_length=128, blank=True)
+    state = models.CharField(
+        max_length=16, choices=TransferState.choices, default=TransferState.PENDING
+    )
+
+    entry_count = models.PositiveIntegerField(default=0)
+    #: SHA-256 of the canonical bundle JSON.
+    bundle_sha256 = models.CharField(max_length=64, blank=True)
+
+    sent_at = models.DateTimeField(null=True, blank=True)
+    last_error = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Health information transfer"
+        verbose_name_plural = "Health information transfers"
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=["clinic", "-created_at"]),
+            models.Index(fields=["state", "-created_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"Transfer {self.transaction_id or self.pk} ({self.get_state_display()})"

@@ -32,7 +32,12 @@ from datetime import timedelta
 from django.core.cache import cache
 from django.utils import timezone
 
-from apps.abdm.repositories.abdm_repository import AbhaRepository, GatewayCallRepository
+from apps.abdm.repositories.abdm_repository import (
+    AbhaRepository,
+    GatewayCallRepository,
+    HieConsentRepository,
+    TransferRepository,
+)
 from apps.accounts.models import Role
 from apps.accounts.repositories.membership_repository import ClinicRepository
 from apps.compliance.repositories.compliance_repository import (
@@ -57,13 +62,14 @@ REVIEW_SLA_HOURS = 24
 RETENTION_YEARS = 3
 RETENTION_WARNING_DAYS = 30
 
-#: Still genuinely not measured. ABHA linkage (M1) is live; record *volume*
-#: pushed to ABDM is an M2 concept and needs the FHIR exchange.
+#: Every tile the audit lists is now measured. What remains unverified is not
+#: the measurement but the integration underneath it: the ABDM wire format has
+#: never round-tripped against a live gateway (AUDIT 11.3), so these numbers
+#: are real counts of what this system did, not proof that ABDM received it.
 PENDING_TILES = (
-    "ABDM records pushed this month, which the DHIS incentive pays on - needs "
-    "the FHIR exchange from M2 (Phase 6)",
-    "Consent artefacts expiring in 30 days - needs consent expiry, which arrives "
-    "with ABDM HIE-CM consent in Phase 6",
+    "Nothing. Every tile AUDIT 8.5 asks for is measured - but the ABDM figures "
+    "count what we sent, and the gateway wire format is still unverified "
+    "against a live sandbox.",
 )
 
 
@@ -81,6 +87,8 @@ class DashboardService:
         breaches: BreachRepository | None = None,
         abha: AbhaRepository | None = None,
         gateway: GatewayCallRepository | None = None,
+        hie_consent: HieConsentRepository | None = None,
+        transfers: TransferRepository | None = None,
     ):
         self.patients = patients or PatientRepository()
         self.consent = consent or ConsentRepository()
@@ -91,6 +99,8 @@ class DashboardService:
         self.breaches = breaches or BreachRepository()
         self.abha = abha or AbhaRepository()
         self.gateway = gateway or GatewayCallRepository()
+        self.hie_consent = hie_consent or HieConsentRepository()
+        self.transfers = transfers or TransferRepository()
 
     def summary(self, *, use_cache: bool = True) -> dict:
         if use_cache:
@@ -192,12 +202,21 @@ class DashboardService:
         failing integration is invisible from the clinical screens, and the
         first sign is usually a patient being told their ABHA "did not work".
         """
-        day_ago = timezone.now() - timedelta(days=1)
+        now = timezone.now()
+        day_ago = now - timedelta(days=1)
+        month_ago = now - timedelta(days=30)
+
         return {
             "abha_verified": self.abha.count_verified(),
             "abha_pending": self.abha.count_pending(),
             "gateway_calls_today": self.gateway.count_since(day_ago),
             "gateway_failures_today": self.gateway.count_failed_since(day_ago),
+            # The DHIS incentive is paid on record volume, so this tile is
+            # money (AUDIT 8.5). It counts what *we sent* - the gateway wire
+            # format is unverified, so it is not proof of receipt.
+            "records_shared_month": self.transfers.count_sent_since(month_ago),
+            "transfers_failed_month": self.transfers.count_failed_since(month_ago),
+            "hie_consents_usable": self.hie_consent.count_usable(),
         }
 
     # --- Charts ------------------------------------------------------------

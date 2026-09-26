@@ -47,6 +47,28 @@ HFR_REGISTER = Endpoint("hfr.register", "POST", "/v1/facility/register")
 HPR_REGISTER = Endpoint("hpr.register", "POST", "/v1/practitioner/register")
 
 
+# --- M2: consent and data exchange ------------------------------------------
+HI_TRANSFER = Endpoint("hi.transfer", "POST", "/v0.5/health-information/transfer")
+CONSENT_NOTIFY = Endpoint("consent.notify", "POST", "/v0.5/consents/hip/notify")
+
+
+def hi_transfer_payload(
+    *, consent_id: str, transaction_id: str, encrypted: dict[str, Any]
+) -> dict[str, Any]:
+    """Push encrypted health information to a HIU.
+
+    ``encrypted`` is the output of ``apps.abdm.services.crypto`` - ciphertext
+    plus the sender's public key and nonce. The gateway relays it and cannot
+    read it, which is the point of encrypting end to end rather than trusting
+    transport security alone.
+    """
+    return {
+        "transactionId": transaction_id,
+        "consentId": consent_id,
+        "entries": [encrypted],
+    }
+
+
 def abha_create_payload(*, name: str, mobile: str, year_of_birth: int | None = None) -> dict[str, Any]:
     """Create an ABHA.
 

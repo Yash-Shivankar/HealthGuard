@@ -258,6 +258,32 @@ clinical meaning is danger - never on a control, never as chrome (AUDIT 8.3).
     {% endcomponent %}
 </div>
 
+{# M2. The records-shared tile is the one AUDIT 8.5 calls money: the DHIS   #}
+{# incentive is paid on record volume. It counts what we sent - the gateway #}
+{# wire format is unverified, so it is not proof of receipt.                #}
+<div class="grid gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-3">
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "Records shared (30 days)" %}</p>
+        <p class="font-semibold text-2xl mt-1">{{ dashboard.abdm.records_shared_month }}</p>
+        <p class="text-subtle text-xs mt-1">{% translate "sent under an ABDM consent" %}</p>
+    {% endcomponent %}
+
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "Transfers failed (30 days)" %}</p>
+        <p class="font-semibold text-2xl mt-1 {% if dashboard.abdm.transfers_failed_month %}text-amber-600 dark:text-amber-400{% endif %}">
+            {{ dashboard.abdm.transfers_failed_month }}
+        </p>
+    {% endcomponent %}
+
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "ABDM consents usable" %}</p>
+        <p class="font-semibold text-2xl mt-1">{{ dashboard.abdm.hie_consents_usable }}</p>
+        <p class="text-subtle text-xs mt-1">
+            {% translate "granted, unrevoked, unexpired - checked live" %}
+        </p>
+    {% endcomponent %}
+</div>
+
 {# ---------- Charts ---------- #}
 <div class="grid gap-4 mb-8 lg:grid-cols-2">
     {% component "unfold/components/card.html" with title="Checks per day" description="Last 30 days" %}

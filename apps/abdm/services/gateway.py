@@ -155,6 +155,14 @@ class StubTransport:
         if request.operation == "hfr.register":
             return {"facilityId": f"HFR-{_stub_suffix(request.payload.get('name', ''))}", "verified": True}
 
+        if request.operation == "hi.transfer":
+            # Echoes the transaction id and acknowledges. Shaped to what the
+            # service consumes, not to imitate an unverified spec in detail.
+            return {
+                "transactionId": request.payload.get("transactionId", ""),
+                "accepted": True,
+            }
+
         if request.operation == "hpr.register":
             return {"hprId": f"HPR-{_stub_suffix(request.payload.get('name', ''))}", "verified": True}
 

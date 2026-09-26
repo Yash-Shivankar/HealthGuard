@@ -126,6 +126,20 @@ UNFOLD = {
                         "permission": "config.settings.unfold.can_view_abdm_registry",
                     },
                     {
+                        "title": "ABDM consents",
+                        "icon": "handshake",
+                        "link": reverse_lazy("admin:abdm_hieconsentartefact_changelist"),
+                        "permission": "config.settings.unfold.can_view_hie_consent",
+                    },
+                    {
+                        "title": "Records shared",
+                        "icon": "outbox",
+                        "link": reverse_lazy(
+                            "admin:abdm_healthinformationtransfer_changelist"
+                        ),
+                        "permission": "config.settings.unfold.can_view_transfers",
+                    },
+                    {
                         "title": "Gateway calls",
                         "icon": "swap_horiz",
                         "link": reverse_lazy("admin:abdm_gatewaycall_changelist"),
@@ -235,6 +249,14 @@ def can_view_abdm_registry(request) -> bool:
 
 def can_view_gateway_calls(request) -> bool:
     return _can(request, "abdm.view_gatewaycall")
+
+
+def can_view_hie_consent(request) -> bool:
+    return _can(request, "abdm.view_hieconsentartefact")
+
+
+def can_view_transfers(request) -> bool:
+    return _can(request, "abdm.view_healthinformationtransfer")
 
 
 def can_view_clinics(request) -> bool:
