@@ -13,6 +13,7 @@ urlpatterns = [
     path("patients/", include("apps.patients.routes.api_v1")),
     path("triage/", include("apps.triage.routes.api_v1")),
     path("abdm/", include("apps.abdm.routes.api_v1")),
+    path("ai/", include("apps.ai.routes.api_v1")),
     # Schema and docs. SERVE_INCLUDE_SCHEMA is off, so these describe the API
     # without exposing themselves as endpoints in it.
     path("schema/", SpectacularAPIView.as_view(), name="schema"),

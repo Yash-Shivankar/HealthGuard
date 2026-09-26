@@ -11,6 +11,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { AppShell } from './components/layout/AppShell';
 import { Spinner } from './components/common';
+import { DescribePage } from './pages/patient/DescribePage';
 import { HomePage } from './pages/patient/HomePage';
 import { IntakePage } from './pages/patient/IntakePage';
 import { PatientsPage } from './pages/clinic/PatientsPage';
@@ -35,6 +36,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/intake" element={<IntakePage />} />
+        <Route path="/describe" element={<DescribePage />} />
         <Route path="/symptoms" element={<SymptomsPage />} />
         <Route path="/result" element={<ResultPage />} />
 

@@ -89,6 +89,8 @@ class DashboardService:
         gateway: GatewayCallRepository | None = None,
         hie_consent: HieConsentRepository | None = None,
         transfers: TransferRepository | None = None,
+        intake_drafts=None,
+        notes=None,
     ):
         self.patients = patients or PatientRepository()
         self.consent = consent or ConsentRepository()
@@ -102,6 +104,17 @@ class DashboardService:
         self.hie_consent = hie_consent or HieConsentRepository()
         self.transfers = transfers or TransferRepository()
 
+        # Imported here rather than at module scope: apps.ai is the newest app
+        # and the dashboard is imported during admin autodiscovery, so a
+        # top-level import puts the two in a load-order race for no benefit.
+        from apps.ai.repositories.ai_repository import (
+            ConsultationNoteRepository,
+            IntakeDraftRepository,
+        )
+
+        self.intake_drafts = intake_drafts or IntakeDraftRepository()
+        self.notes = notes or ConsultationNoteRepository()
+
     def summary(self, *, use_cache: bool = True) -> dict:
         if use_cache:
             cached = cache.get(CACHE_KEY)
@@ -113,6 +126,7 @@ class DashboardService:
             "clinical_safety": self.clinical_safety(),
             "compliance": self.compliance(),
             "abdm": self.abdm(),
+            "ai": self.ai(),
             "charts": {
                 "assessments_per_day": self.assessments_per_day(),
                 "urgency_mix": self.urgency_mix(),
@@ -219,6 +233,28 @@ class DashboardService:
             "hie_consents_usable": self.hie_consent.count_usable(),
         }
 
+    def ai(self) -> dict:
+        """AI drafts waiting for a clinician, and where data went.
+
+        ``external_calls`` is the number a DPDP audit asks for, and it should read
+        zero until someone deliberately configures a vendor - which is exactly
+        what makes it worth a tile rather than a log search.
+
+        ``languages`` is the one fairness-adjacent figure this project can
+        honestly produce. It says which languages patients are using. It does
+        **not** say whether they are served equally well: AUDIT 6 requires
+        fairness measured across age, sex and language, and the current dataset
+        cannot support that. Recording the label is what makes it possible later.
+        """
+        from apps.ai.repositories.ai_repository import AiCallRepository
+
+        return {
+            "intake_drafts_pending": self.intake_drafts.count_pending(),
+            "notes_pending": self.notes.count_pending(),
+            "external_calls": AiCallRepository.count_external(),
+            "languages": self.intake_drafts.language_breakdown(),
+        }
+
     # --- Charts ------------------------------------------------------------
     def assessments_per_day(self, days: int = 30) -> list[dict]:
         since = timezone.now() - timedelta(days=days)
@@ -282,6 +318,19 @@ def unreviewed_badge(request) -> int | None:
     if not request.user.has_perm("triage.view_triageassessment"):
         return None
     return AssessmentRepository().count_unreviewed() or None
+
+
+def ai_drafts_badge(request) -> int | None:
+    """Intake drafts waiting for a clinician.
+
+    Scoped to the caller's clinic where they have one, like the other badges: a
+    count that includes another clinic's queue is not actionable.
+    """
+    from apps.ai.repositories.ai_repository import IntakeDraftRepository
+
+    clinic_id = getattr(request.user, "clinic_id", None)
+    count = IntakeDraftRepository.count_pending(clinic_id)
+    return count or None
 
 
 def open_dsr_badge(request) -> int | None:

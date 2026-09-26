@@ -15,7 +15,8 @@
     "signOut": "Sign out",
     "patients": "Patients",
     "reviewQueue": "Review queue",
-    "language": "Language"
+    "language": "Language",
+    "describe": "Describe the problem"
   },
   "intake": {
     "title": "Your details",
@@ -104,5 +105,28 @@
     "error": "Something went wrong",
     "required": "required",
     "backHome": "Back to home"
+  },
+  "describe": {
+    "title": "Describe the problem",
+    "subtitle": "Type or speak in your own words. You can use English, Hindi or Marathi.",
+    "label": "What is wrong?",
+    "placeholder": "For example: I have had itching and a rash for four days",
+    "languagesHint": "English, हिंदी or मराठी - whichever is easiest.",
+    "submit": "Read my description",
+    "reading": "Reading what you wrote",
+    "weRead": "What we understood",
+    "checkThese": "Check these are right. Untick anything that is wrong - nothing is recorded until you continue.",
+    "matchedOn": "from “{{phrase}}”",
+    "understoodNothing": "We could not match anything you wrote to a symptom we know. That does not mean nothing is wrong - please pick from the list instead.",
+    "notUnderstood": "We did not understand",
+    "notUnderstoodHint": "Please choose these from the list on the next screen.",
+    "durationRead_one": "You said {{count}} day. Is that right?",
+    "durationRead_other": "You said {{count}} days. Is that right?",
+    "continue": "Continue",
+    "pickManually": "Pick from the list instead",
+    "aiNotice": "This reading was done automatically and is not a diagnosis. A doctor checks it before it becomes part of your record.",
+    "simulatedNotice": "Voice input is not connected yet, so this text was an example rather than your recording.",
+    "errorEmpty": "Please describe the problem first.",
+    "errorFailed": "We could not read that just now. Please try again, or pick from the list."
   }
 }

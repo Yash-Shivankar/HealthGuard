@@ -20,7 +20,7 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { Alert, Card, ErrorState, Spinner } from '../../components/common';
 import { useAsync } from '../../services/hooks';
@@ -35,9 +35,19 @@ export function SymptomsPage() {
     [],
   );
 
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  // Arrives from /describe when the patient described the problem in their own
+  // words. Seeded rather than locked: the extraction can misread someone, and
+  // the whole point of landing here is that every box stays editable.
+  const handoff = (useLocation().state ?? {}) as {
+    preselected?: string[];
+    days?: number | null;
+  };
+
+  const [selected, setSelected] = useState<Set<string>>(
+    () => new Set(handoff.preselected ?? []),
+  );
   const [filter, setFilter] = useState('');
-  const [days, setDays] = useState('');
+  const [days, setDays] = useState(handoff.days ? String(handoff.days) : '');
   const [problem, setProblem] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
 

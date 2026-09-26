@@ -17,6 +17,7 @@ Crude and enforced beats elegant and aspirational.
 from __future__ import annotations
 
 import ast
+import pathlib
 from pathlib import Path
 
 import pytest
@@ -158,6 +159,85 @@ class TestDependencyDirection:
                 ):
                     offenders.append(str(path.relative_to(APPS_DIR)))
         assert not offenders, f"apps/ imports the ml training package: {offenders}"
+
+
+class TestTheAiLayerDoesNotClassify:
+    """AUDIT 6, Tier 1 states the separation that keeps the system auditable:
+
+        The LLM normalises language. The deterministic model classifies.
+
+    Extraction turns free text into symptom names from the model's vocabulary and
+    stops. The ranked differential comes from the versioned artefact, after a
+    human has confirmed the symptom list. Nothing enforces that at runtime - a
+    single import would quietly merge the two halves - so it is enforced here.
+
+    The confirmation service is deliberately exempt: hand-off to triage is its
+    entire job, and that hand-off is the one place a human stands between them.
+    """
+
+    #: Modules that read a patient's words. None of them may classify.
+    EXTRACTION_MODULES = (
+        "ai/services/extraction_service.py",
+        "ai/services/lexicon.py",
+        "ai/services/providers.py",
+        "ai/services/voice_service.py",
+        "ai/services/redaction.py",
+    )
+
+    @pytest.mark.parametrize("relative", EXTRACTION_MODULES)
+    def test_extraction_does_not_import_the_predictor(self, relative):
+        path = APPS_DIR / relative
+        assert path.exists(), f"{relative} moved; update this test rather than deleting it"
+
+        offenders = sorted(
+            module
+            for module in _imported_modules(path)
+            if "predictor" in module or "assessment_service" in module
+        )
+        assert not offenders, (
+            f"{relative} imports {offenders}. Extraction normalises language; it "
+            "must not classify. Hand off through IntakeService, which puts a "
+            "clinician in between."
+        )
+
+    def test_the_extraction_result_cannot_carry_a_diagnosis(self):
+        """A field named for a disease is how the separation would be lost.
+
+        Checked on the dataclass rather than the imports, because the damage a
+        structure allows outlives whatever the code does with it today.
+        """
+        from apps.ai.services.providers import Extraction, SymptomMatch
+
+        forbidden = {"disease", "diagnosis", "condition", "differential", "severity"}
+        for cls in (Extraction, SymptomMatch):
+            fields = set(getattr(cls, "__dataclass_fields__", {}))
+            assert not (fields & forbidden), (
+                f"{cls.__name__} has {sorted(fields & forbidden)}. An extraction "
+                "result must not be able to express a clinical conclusion."
+            )
+
+    def test_the_ai_app_is_layered_like_the_others(self):
+        """Guards the guard: the parametrised test above passes trivially if the
+        files are gone, and a new module added beside them is not covered at all.
+        """
+        services = sorted(
+            p.name for p in (APPS_DIR / "ai" / "services").glob("*.py")
+            if p.name != "__init__.py"
+        )
+        assert services, "apps/ai/services is empty"
+
+        covered = {pathlib.Path(m).name for m in self.EXTRACTION_MODULES}
+        # The modules deliberately outside the rule, each for a stated reason.
+        exempt = {
+            "intake_service.py",  # its job is the hand-off
+            "summary_service.py",  # summarises an assessment that already exists
+            "recorder.py",  # writes the call log
+        }
+        uncovered = set(services) - covered - exempt
+        assert not uncovered, (
+            f"New service module(s) {sorted(uncovered)} are neither covered by "
+            "the no-classify rule nor listed as exempt. Decide which, and say why."
+        )
 
 
 class TestThrottleScopesAreConfigured:

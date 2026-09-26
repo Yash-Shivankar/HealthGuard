@@ -148,6 +148,31 @@ UNFOLD = {
                 ],
             },
             {
+                "title": "AI assistance",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Intake drafts",
+                        "icon": "record_voice_over",
+                        "link": reverse_lazy("admin:ai_intakedraft_changelist"),
+                        "permission": "config.settings.unfold.can_view_ai_drafts",
+                        "badge": "apps.audit.services.dashboard_service.ai_drafts_badge",
+                    },
+                    {
+                        "title": "Consultation notes",
+                        "icon": "description",
+                        "link": reverse_lazy("admin:ai_consultationnote_changelist"),
+                        "permission": "config.settings.unfold.can_view_ai_notes",
+                    },
+                    {
+                        "title": "AI calls",
+                        "icon": "neurology",
+                        "link": reverse_lazy("admin:ai_aicall_changelist"),
+                        "permission": "config.settings.unfold.can_view_ai_calls",
+                    },
+                ],
+            },
+            {
                 "title": "Compliance",
                 "separator": True,
                 "items": [
@@ -237,6 +262,18 @@ def can_view_consent(request) -> bool:
 
 def can_view_audit(request) -> bool:
     return _can(request, "audit.view_accesslogentry")
+
+
+def can_view_ai_drafts(request) -> bool:
+    return _can(request, "ai.view_intakedraft")
+
+
+def can_view_ai_notes(request) -> bool:
+    return _can(request, "ai.view_consultationnote")
+
+
+def can_view_ai_calls(request) -> bool:
+    return _can(request, "ai.view_aicall")
 
 
 def can_view_abdm(request) -> bool:

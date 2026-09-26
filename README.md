@@ -189,16 +189,19 @@ apps/                one app per bounded context
   ├── consent/       DPDP consent artefacts
   ├── triage/        symptom intake and prediction
   ├── compliance/    retention notices, data requests, breach incidents
-  └── audit/         read-access log and the ops dashboard
+  ├── audit/         read-access log and the ops dashboard
+  ├── abdm/          ABHA linkage, FHIR bundles, HIE-CM consent, transfers
+  └── ai/            voice intake, symptom extraction, note drafting
 common/              middleware, base admin classes, shared building blocks
 utils/               validators, domain exceptions, logging, pagination
 ml/                  offline training; not imported by the app at runtime
   ├── dataset.py     canonical data loading and cleaning
   ├── train.py       the pipeline
   └── artifacts/     versioned model + metrics + model card
+frontend/            React + TypeScript SPA (Vite)
 templates/  static/  the server-rendered surface
 data/                source CSVs, as delivered
-docs/                AUDIT.md, HISTORY.md
+docs/                AUDIT.md, HISTORY.md, AI_CARD.md
 ```
 
 Each app is layered the same way (AUDIT §7.1):
@@ -216,9 +219,9 @@ The rule that keeps it honest: **controllers never touch the ORM, services
 never touch HTTP, repositories never contain business logic.** Violate it once
 and you are back to the 193-line `views.py` the audit found.
 
-The apps the audit provisions but that do not exist yet — `encounters` and
-`abdm` — are deliberately absent rather than scaffolded empty. They belong to
-Phases 5–6, and an empty app is a liability, not a head start.
+`abdm` arrived in Phases 5–6 and `ai` in Phase 7. `encounters` is still
+deliberately absent rather than scaffolded empty — an empty app is a liability,
+not a head start.
 
 ## Multi-tenancy
 
@@ -385,6 +388,127 @@ The crypto is fully tested; the **wire envelope is not**.
 Transfers store a SHA-256 of the bundle, never the bundle. That answers "was
 this exact document sent, under which consent?" without being a second copy of
 the clinical data.
+
+## AI assistance (Tier 1)
+
+A patient describes their problem in Hindi, Marathi or English — typed or spoken —
+and the system proposes canonical symptoms for a clinician to check. A
+consultation note is then drafted from the recorded encounter.
+
+**Read `docs/AI_CARD.md` before trusting any of this.** It is the honest account
+of what works, what is simulated, and what has not been reviewed.
+
+### The separation that makes it auditable
+
+> The language layer normalises. The deterministic model classifies.
+
+Nothing in `apps/ai/` names a condition. Extraction produces symptom names that
+already exist in the classifier's 131-term vocabulary and stops there. An
+architecture test fails the build if an extraction module imports the predictor,
+and a second test asserts the extraction result type has no field capable of
+holding a diagnosis — because what a structure permits outlives what the code
+currently does with it.
+
+### What is real and what needs a vendor
+
+| Capability | Default provider | Real? |
+|---|---|---|
+| Transcription | `StubTranscriber` | **Simulated** — needs a vendor (§11.5) |
+| Extraction | `LexiconExtractor` | Real, offline, deterministic |
+| Summarisation | `TemplateSummariser` | Real, deterministic |
+
+Only transcription genuinely requires a third party. The lexicon covers **123 of
+131** canonical symptoms across three languages with 849 phrases, runs offline,
+and is the baseline any paid model has to beat. The summariser cannot hallucinate
+because it is not generating: every sentence is built from a field that was
+already recorded.
+
+```bash
+python manage.py ai_status
+```
+
+Prints which providers are live, whether data may leave, and — when it may not —
+**which condition refused**.
+
+### Nothing enters a record without a clinician
+
+Every draft starts in `draft` state, confirmation requires a named actor, and **a
+simulated draft can never be confirmed.** That last rule is stricter than the
+ABDM stub precedent on purpose: a fake ABHA number in a dev database is obviously
+fake, but a fake transcript is fabricated clinical content.
+
+There are **two** sign-offs, for two different claims:
+
+- confirming an **intake draft** asserts *these are the symptoms this patient has*
+- reviewing the resulting **assessment** asserts *the differential is clinically
+  sensible*
+
+The assessment created by confirming a draft is still `unreviewed`. A clinician
+may add symptoms the extractor missed and remove ones it invented; proposed and
+confirmed symptoms are separate fields, so the review is visible as a diff.
+
+### It will not invent a clinical detail
+
+The vocabulary has `mild_fever` and `high_fever`. A patient saying "fever" has not
+said which — so bare "fever" becomes a question (`fever - which one?`) surfaced to
+the clinician, rather than guessed or silently dropped. Picking one would fabricate
+a grade *and* change which diseases match.
+
+### No medication, ever
+
+`assert_no_medication()` scans every draft and every clinician edit for drug
+names, dose shapes (`500mg`, `5 ml`), and prescription shorthand (`bd`, `tds`,
+`sos`), and **refuses** rather than flagging. A flag relies on someone noticing,
+and the premise of ambient documentation is that nobody is reading carefully. It
+runs on the deterministic path too, where it cannot fail — a guard that only runs
+where you expect failure is not a guard.
+
+### Four conditions before anything leaves the building
+
+AUDIT §6: *no patient-identifiable data to third-party LLM APIs without a consent
+basis and a processor agreement.* Implemented as four conditions that must **all**
+hold:
+
+1. `AI_ALLOW_EXTERNAL_PROCESSING=True` — off by default
+2. the provider has both a URL and a key
+3. `AI_PROCESSOR_AGREEMENT_REF` is non-empty — **an empty string refuses**
+4. the patient granted `ConsentPurpose.AI_ASSISTANCE`, checked per call
+
+`AI_ASSISTANCE` is a new itemised DPDP purpose: agreeing to a symptom check is not
+agreeing that a recording of your voice goes to a third party.
+
+Before any external call, identifiers are stripped — the patient's own name,
+phone and ABHA **by value**, plus pattern-matched numbers, ABHA addresses and
+emails. It does **not** remove a third party's name, and that limit is pinned by
+tests so it cannot be quietly relied upon.
+
+### Provenance survives erasure; content does not
+
+The draft holds the patient's words and **cascades** when they are erased.
+`AiCall` is append-only and holds the provider, model version, timings and
+SHA-256 hashes — **no text**. So "which version processed this?" survives an
+erasure while the content does not.
+
+**Audio is never stored.** The transcript serves every purpose the recording
+would, and a recording of someone's voice is biometric data about them.
+
+### Fairness
+
+§6 requires fairness measured across age, sex and language, and the current
+dataset cannot support it. That has not changed. What has: **input language is now
+recorded on every draft**, at capture. The dashboard shows which languages
+patients use — it does **not** show whether each is served equally well.
+
+### Not built
+
+The **red-flag gate** ("chest pain radiating to the arm plus sweating must bypass
+every model") is §6 Tier 2, not Tier 1. Free-text intake makes it more urgent than
+it was with a checkbox list. It is the first thing to build next.
+
+```bash
+grep -rn "AI-VENDOR-SPECIFIC: verify" apps/   # needs a chosen vendor (§11.5)
+grep -rn "CLINICAL-REVIEW-NEEDED" apps/       # needs a clinician (§11.6)
+```
 
 ## Regulatory position
 

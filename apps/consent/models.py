@@ -36,6 +36,17 @@ class ConsentPurpose(models.TextChoices):
     # a national health identifier and share records through ABDM, and the
     # DPDP Rules require notice to be itemised per purpose (AUDIT 4.1, 4.2).
     ABDM_LINKAGE = "abdm_linkage", "Link an ABHA and share records via ABDM"
+    # Separate again, and for the same reason. Agreeing to a symptom check is
+    # not agreeing that a recording of your voice, or your description of your
+    # illness, may be sent to a third-party AI processor. AUDIT 6 states the
+    # guardrail: no patient-identifiable data to third-party LLM APIs without a
+    # consent basis and a processor agreement. This is that basis, and it is
+    # itemised because the DPDP Rules require notice to be.
+    #
+    # Only needed for *external* processing. The default extractor runs locally
+    # on data we already hold under SYMPTOM_CHECK, and demanding a second
+    # consent for that would train people to click through the one that matters.
+    AI_ASSISTANCE = "ai_assistance", "AI assistance using a third-party processor"
 
 
 class ConsentArtefact(models.Model):

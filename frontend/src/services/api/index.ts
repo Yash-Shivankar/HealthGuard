@@ -1,4 +1,5 @@
 export { ApiRequestError, ensureCsrfToken, request } from './client';
+export { aiApi } from './ai';
 export { authApi } from './auth';
 export { patientsApi } from './patients';
 export type { IntakePayload } from './patients';

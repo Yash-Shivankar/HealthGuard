@@ -34,6 +34,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
 
           <nav className="hg-nav" aria-label="Main navigation">
+            <NavLink to="/describe">{t('nav.describe')}</NavLink>
             <NavLink to="/symptoms">{t('nav.symptomCheck')}</NavLink>
 
             {/* Clinic links appear only for a signed-in staff account. Hiding

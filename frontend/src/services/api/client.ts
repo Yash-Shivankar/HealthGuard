@@ -79,8 +79,14 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   const unsafe = method !== 'GET';
   if (unsafe) await ensureCsrfToken();
 
+  // A FormData body must go as multipart, and the browser has to set the header
+  // itself because only it knows the boundary string. Setting
+  // 'application/json' here would produce a request whose body and header
+  // disagree, which arrives as an unhelpful 400.
+  const isMultipart = typeof FormData !== 'undefined' && body instanceof FormData;
+
   const headers: Record<string, string> = { Accept: 'application/json' };
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  if (body !== undefined && !isMultipart) headers['Content-Type'] = 'application/json';
   if (unsafe) {
     const token = readCookie(CSRF_COOKIE);
     if (token) headers['X-CSRFToken'] = token;
@@ -92,7 +98,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     // Without this the browser sends no session cookie and every request looks
     // anonymous - the most confusing possible failure mode.
     credentials: 'include',
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: body === undefined ? undefined : isMultipart ? (body as FormData) : JSON.stringify(body),
     signal,
   });
 

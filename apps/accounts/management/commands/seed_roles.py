@@ -51,6 +51,13 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "triage.view_triageassessment",
         # Sign-off. The only clinical write a doctor needs in the admin.
         "triage.change_triageassessment",
+        # AI drafts: a clinician reviews and confirms them. No add_intakedraft -
+        # a draft records something that happened, so nothing creates one by hand.
+        "ai.view_intakedraft",
+        "ai.change_intakedraft",
+        "ai.view_consultationnote",
+        "ai.add_consultationnote",
+        "ai.change_consultationnote",
         "consent.view_consentartefact",
         # A doctor sees whether a patient has an ABHA; linking one is a front-
         # desk task at registration, which is where M1 puts it.
@@ -65,6 +72,13 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "patients.change_patient",
         "triage.view_triageassessment",
         "triage.change_triageassessment",
+        # AI drafts: a clinician reviews and confirms them. No add_intakedraft -
+        # a draft records something that happened, so nothing creates one by hand.
+        "ai.view_intakedraft",
+        "ai.change_intakedraft",
+        "ai.view_consultationnote",
+        "ai.add_consultationnote",
+        "ai.change_consultationnote",
         "consent.view_consentartefact",
         "accounts.view_clinic",
         "accounts.view_membership",
@@ -93,6 +107,12 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "compliance.view_breachincident",
         "compliance.add_breachincident",
         "compliance.change_breachincident",
+        # The AI call log, but **not** the drafts. Ops audits what the AI did -
+        # which model version, whether anything left the building - and that log
+        # holds hashes rather than text. The drafts hold the patient's own
+        # description of their illness, which is clinical content and not ops
+        # business; reviewing one is a clinical judgement anyway.
+        "ai.view_aicall",
         # Registry onboarding and gateway health are ops work.
         "abdm.view_abhalink",
         "abdm.view_facilityregistration",

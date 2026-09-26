@@ -128,6 +128,9 @@ LOCAL_APPS = [
     "apps.compliance",
     # ABDM: ABHA linkage, HFR/HPR registration, Scan-&-Share (AUDIT 4.2 M1).
     "apps.abdm",
+    # AI Tier 1: voice intake, symptom extraction, ambient summarisation - all
+    # of it producing drafts that need a clinician (AUDIT 6, Tier 1).
+    "apps.ai",
 ]
 
 INSTALLED_APPS = UNFOLD_APPS + DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -270,6 +273,13 @@ REST_FRAMEWORK = {
         # lockout, because axes counts attempts per view and a second door is a
         # second budget.
         "login": env.str("DJANGO_THROTTLE_LOGIN", default="20/hour"),
+        # Tighter than triage. Extraction is more expensive than a forest
+        # predict and, once a vendor is configured, it costs money per call -
+        # so an unthrottled endpoint is someone else's bill.
+        "ai_intake": env.str("DJANGO_THROTTLE_AI_INTAKE", default="20/hour"),
+        # Tighter still: an audio upload is two orders of magnitude more bytes
+        # and, with a vendor, the most expensive call in the system.
+        "ai_voice": env.str("DJANGO_THROTTLE_AI_VOICE", default="10/hour"),
     },
     "EXCEPTION_HANDLER": "utils.exceptions.handlers.api_exception_handler",
 }
@@ -397,3 +407,44 @@ ABDM_BASE_URL = env.str("ABDM_BASE_URL", default="")
 ABDM_CLIENT_ID = env.str("ABDM_CLIENT_ID", default="")
 ABDM_CLIENT_SECRET = env.str("ABDM_CLIENT_SECRET", default="")
 ABDM_TIMEOUT_SECONDS = env.float("ABDM_TIMEOUT_SECONDS", default=10.0)
+
+
+# --- AI Tier 1 (AUDIT 6) -----------------------------------------------------
+# AUDIT 6 ends with a guardrail that is not negotiable:
+#
+#   No patient-identifiable data to third-party LLM APIs without a consent
+#   basis and a processor agreement. Plan for on-prem or India-region inference.
+#
+# Four conditions must ALL hold before a character leaves this machine, and
+# three of them are here (the fourth is the patient's own consent, checked per
+# call against ConsentPurpose.AI_ASSISTANCE):
+#
+#   1. AI_ALLOW_EXTERNAL_PROCESSING is on
+#   2. the provider has both a URL and a key
+#   3. AI_PROCESSOR_AGREEMENT_REF names a signed agreement - an empty string
+#      refuses, which is what stops "we have a DPA" being a claim in a README
+#
+# With any of them missing the app uses its local providers and keeps working:
+# the lexicon extractor and the template summariser are real implementations,
+# not stubs, so an unconfigured deployment loses quality and not function. The
+# transcriber is the exception - speech recognition cannot be done locally here,
+# so its stub returns canned text and every draft built from it is marked
+# simulated, which the review gate refuses to let anyone sign off.
+#
+# BEFORE ENABLING: no vendor is contracted (AUDIT 11.5 is unanswered), so the
+# request shapes in apps/ai/services/providers.py are placeholders. Check them
+# against the chosen provider's documentation first - grep for
+# "AI-VENDOR-SPECIFIC: verify".
+AI_ALLOW_EXTERNAL_PROCESSING = env.bool("AI_ALLOW_EXTERNAL_PROCESSING", default=False)
+AI_PROCESSOR_AGREEMENT_REF = env.str("AI_PROCESSOR_AGREEMENT_REF", default="")
+
+# Speech to text.
+AI_ASR_BASE_URL = env.str("AI_ASR_BASE_URL", default="")
+AI_ASR_API_KEY = env.str("AI_ASR_API_KEY", default="")
+
+# LLM symptom normalisation. Prefer on-prem or India-region inference.
+AI_LLM_BASE_URL = env.str("AI_LLM_BASE_URL", default="")
+AI_LLM_API_KEY = env.str("AI_LLM_API_KEY", default="")
+AI_LLM_MODEL = env.str("AI_LLM_MODEL", default="")
+
+AI_TIMEOUT_SECONDS = env.float("AI_TIMEOUT_SECONDS", default=20.0)

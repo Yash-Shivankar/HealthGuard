@@ -284,6 +284,59 @@ clinical meaning is danger - never on a control, never as chrome (AUDIT 8.3).
     {% endcomponent %}
 </div>
 
+{# ---------- AI assistance (AUDIT 6, Tier 1) ---------- #}
+{# The external-calls tile is the one a DPDP audit asks for, and it should    #}
+{# read zero until someone deliberately configures a vendor - which is what   #}
+{# makes it worth a tile rather than a log search.                            #}
+<h2 class="font-semibold mb-4 text-font-important-light dark:text-font-important-dark">
+    {% translate "AI assistance" %}
+</h2>
+<div class="grid gap-4 mb-4 sm:grid-cols-2 lg:grid-cols-3">
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "Intake drafts waiting" %}</p>
+        <p class="font-semibold text-2xl mt-1 {% if dashboard.ai.intake_drafts_pending %}text-amber-600 dark:text-amber-400{% endif %}">
+            {{ dashboard.ai.intake_drafts_pending }}
+        </p>
+        <p class="text-subtle text-xs mt-1">{% translate "need a clinician before they are records" %}</p>
+    {% endcomponent %}
+
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "Notes awaiting sign-off" %}</p>
+        <p class="font-semibold text-2xl mt-1 {% if dashboard.ai.notes_pending %}text-amber-600 dark:text-amber-400{% endif %}">
+            {{ dashboard.ai.notes_pending }}
+        </p>
+    {% endcomponent %}
+
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "Calls to a third party" %}</p>
+        <p class="font-semibold text-2xl mt-1 {% if dashboard.ai.external_calls %}text-red-600 dark:text-red-400{% endif %}">
+            {{ dashboard.ai.external_calls }}
+        </p>
+        <p class="text-subtle text-xs mt-1">
+            {% translate "patient data that left this deployment" %}
+        </p>
+    {% endcomponent %}
+</div>
+
+{# Which languages patients are actually using. This does NOT say whether they #}
+{# are served equally well - AUDIT 6 wants fairness across age, sex and        #}
+{# language, and the current dataset cannot support that. Collecting the label #}
+{# is what makes the measurement possible later.                              #}
+{% if dashboard.ai.languages %}
+<div class="mb-8">
+    {% component "unfold/components/card.html" with title="Intake language" description="Which languages patients use - not whether each is served equally well" %}
+        <table class="w-full text-sm">
+            {% for row in dashboard.ai.languages %}
+                <tr class="border-b border-base-200 dark:border-base-800">
+                    <td class="py-2">{{ row.language }}</td>
+                    <td class="py-2 text-right font-medium">{{ row.count }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% endcomponent %}
+</div>
+{% endif %}
+
 {# ---------- Charts ---------- #}
 <div class="grid gap-4 mb-8 lg:grid-cols-2">
     {% component "unfold/components/card.html" with title="Checks per day" description="Last 30 days" %}

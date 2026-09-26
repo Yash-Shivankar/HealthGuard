@@ -46,6 +46,8 @@ REST_FRAMEWORK = {  # noqa: F405
         "user": None,
         "triage": None,
         "login": None,
+        "ai_intake": None,
+        "ai_voice": None,
     },
 }
 
