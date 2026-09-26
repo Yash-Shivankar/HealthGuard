@@ -110,12 +110,17 @@ THIRD_PARTY_APPS = [
 # empty: they belong to Phases 4-6 and an empty app is a liability, not a
 # head start.
 LOCAL_APPS = [
+    # Tenancy first: patients and triage hold foreign keys into it.
+    "apps.accounts",
     "apps.patients",
     "apps.consent",
     "apps.triage",
     # Read-access log. Django's LogEntry records changes only, and reading a
     # patient record is the event that matters under DPDP (AUDIT 8.9).
     "apps.audit",
+    # DPDP obligations that have deadlines: retention notices, data-subject
+    # requests, breach incidents (AUDIT 4.1, 8.5).
+    "apps.compliance",
 ]
 
 INSTALLED_APPS = UNFOLD_APPS + DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -131,6 +136,10 @@ MIDDLEWARE = [
     "django_otp.middleware.OTPMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Resolves which clinic a request may see, and sets user.clinic_id for the
+    # admin scoping in common/admin (AUDIT 8.7). Must follow
+    # AuthenticationMiddleware.
+    "common.middleware.tenancy.TenancyMiddleware",
     # Optional network restriction in front of the admin. Off unless
     # ADMIN_IP_ALLOWLIST is set - AUDIT 11.7 (will ops be on a fixed IP?) is
     # still unanswered, so this cannot be switched on by default.

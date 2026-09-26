@@ -47,8 +47,16 @@ class ConsentInline(admin.TabularInline):
 class PatientAdmin(AuditedModelAdmin, SimpleHistoryAdmin):
     # The admin is the largest concentrated PII surface in the product, so
     # exposure is a design parameter here, not an afterthought (AUDIT 8.8).
-    list_display = ("name", "masked_contact_display", "age", "bmi_display", "created_at")
-    list_filter = ("created_at",)
+    list_display = (
+        "name",
+        "masked_contact_display",
+        "age",
+        "bmi_display",
+        "clinic",
+        "created_at",
+    )
+    list_filter = ("clinic", "created_at")
+    list_select_related = ("clinic",)
     # Deliberately **not** `contact`. An unthrottled admin search over phone
     # numbers is a bulk-extraction endpoint (8.8).
     search_fields = ("name",)
@@ -57,11 +65,14 @@ class PatientAdmin(AuditedModelAdmin, SimpleHistoryAdmin):
     list_per_page = 50
     inlines = [ConsentInline]
 
-    # Phase 4 sets tenant_field = "clinic_id"; the four-place discipline in
-    # ScopedModelAdmin is already wired and already under test.
-    tenant_field = None
+    # Live as of Phase 4. The four-place discipline in ScopedModelAdmin was
+    # written and tested in Phase 3 against a stand-in scope; this is the only
+    # line that had to change.
+    tenant_field = "clinic_id"
+    tenant_scoped_fks = ("clinic",)
 
     fieldsets = (
+        ("Clinic", {"fields": ("clinic",)}),
         (
             "Person",
             {"fields": ("name", "contact", "age", "height_cm", "weight_kg", "bmi_display")},

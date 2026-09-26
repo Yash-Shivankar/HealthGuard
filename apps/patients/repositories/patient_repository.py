@@ -20,6 +20,7 @@ class PatientRepository:
         age: int,
         height_cm: float,
         weight_kg: float,
+        clinic=None,
     ) -> Patient:
         return Patient.objects.create(
             name=name,
@@ -27,6 +28,7 @@ class PatientRepository:
             age=age,
             height_cm=height_cm,
             weight_kg=weight_kg,
+            clinic=clinic,
         )
 
     @staticmethod
@@ -55,6 +57,19 @@ class PatientRepository:
     @staticmethod
     def count() -> int:
         return Patient.objects.count()
+
+    @staticmethod
+    def created_before(cutoff):
+        """Records past a retention horizon, oldest first.
+
+        Returns rows rather than a count because the retention pass has to act
+        on each one. select_related on clinic because the notice records it.
+        """
+        return (
+            Patient.objects.filter(created_at__lt=cutoff)
+            .select_related("clinic")
+            .order_by("created_at")
+        )
 
     @staticmethod
     def count_created_before(cutoff) -> int:

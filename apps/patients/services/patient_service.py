@@ -39,6 +39,7 @@ class PatientService:
         height_cm: float,
         weight_kg: float,
         consent_given: bool,
+        clinic=None,
         notice_version: str | None = None,
     ) -> Patient:
         """Create a patient record and the consent artefact that permits it.
@@ -64,10 +65,17 @@ class PatientService:
             age=age,
             height_cm=height_cm,
             weight_kg=weight_kg,
+            clinic=clinic,
         )
         self.consent_service.grant(patient=patient, notice_version=notice_version)
 
-        logger.info("Patient registered", extra={"patient_id": patient.pk})
+        logger.info(
+            "Patient registered",
+            extra={
+                "patient_id": patient.pk,
+                "clinic_id": clinic.pk if clinic is not None else None,
+            },
+        )
         return patient
 
     def get(self, patient_id: int) -> Patient:

@@ -60,10 +60,28 @@ UNFOLD = {
         # replaces Django's alphabetical app list, which is the single biggest
         # usability win available here (8.4).
         #
-        # CLINICS, ENCOUNTERS, ABDM and the model registry are absent because
-        # the models behind them do not exist yet (Phases 4-6). Listing empty
-        # groups would make the admin look broken rather than unfinished.
+        # ENCOUNTERS, ABDM and the model registry are still absent because the
+        # models behind them do not exist yet (Phases 5-6). Listing empty groups
+        # would make the admin look broken rather than unfinished.
         "navigation": [
+            {
+                "title": "Clinics",
+                "separator": False,
+                "items": [
+                    {
+                        "title": "Clinics",
+                        "icon": "local_hospital",
+                        "link": reverse_lazy("admin:accounts_clinic_changelist"),
+                        "permission": "config.settings.unfold.can_view_clinics",
+                    },
+                    {
+                        "title": "Staff",
+                        "icon": "badge",
+                        "link": reverse_lazy("admin:accounts_membership_changelist"),
+                        "permission": "config.settings.unfold.can_view_staff",
+                    },
+                ],
+            },
             {
                 "title": "Patients",
                 "separator": False,
@@ -92,6 +110,32 @@ UNFOLD = {
                         "icon": "verified_user",
                         "link": reverse_lazy("admin:consent_consentartefact_changelist"),
                         "permission": "config.settings.unfold.can_view_consent",
+                    },
+                    {
+                        "title": "Data requests",
+                        "icon": "contact_support",
+                        "link": reverse_lazy(
+                            "admin:compliance_datasubjectrequest_changelist"
+                        ),
+                        "permission": "config.settings.unfold.can_view_dsr",
+                        "badge": "apps.audit.services.dashboard_service.open_dsr_badge",
+                    },
+                    {
+                        "title": "Breach incidents",
+                        "icon": "gpp_maybe",
+                        "link": reverse_lazy(
+                            "admin:compliance_breachincident_changelist"
+                        ),
+                        "permission": "config.settings.unfold.can_view_breaches",
+                        "badge": "apps.audit.services.dashboard_service.open_breach_badge",
+                    },
+                    {
+                        "title": "Retention notices",
+                        "icon": "auto_delete",
+                        "link": reverse_lazy(
+                            "admin:compliance_retentionnotice_changelist"
+                        ),
+                        "permission": "config.settings.unfold.can_view_retention",
                     },
                     {
                         "title": "Access log",
@@ -147,6 +191,26 @@ def can_view_consent(request) -> bool:
 
 def can_view_audit(request) -> bool:
     return _can(request, "audit.view_accesslogentry")
+
+
+def can_view_clinics(request) -> bool:
+    return _can(request, "accounts.view_clinic")
+
+
+def can_view_staff(request) -> bool:
+    return _can(request, "accounts.view_membership")
+
+
+def can_view_dsr(request) -> bool:
+    return _can(request, "compliance.view_datasubjectrequest")
+
+
+def can_view_breaches(request) -> bool:
+    return _can(request, "compliance.view_breachincident")
+
+
+def can_view_retention(request) -> bool:
+    return _can(request, "compliance.view_retentionnotice")
 
 
 def is_superuser(request) -> bool:

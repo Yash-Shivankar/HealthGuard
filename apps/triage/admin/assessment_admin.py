@@ -46,23 +46,25 @@ class TriageAssessmentAdmin(AuditedModelAdmin, SimpleHistoryAdmin):
         "review_badge",
         "days",
     )
-    list_filter = ("review_state", "urgency_level", "abstained", "created_at")
+    list_filter = ("clinic", "review_state", "urgency_level", "abstained", "created_at")
     date_hierarchy = "created_at"
     ordering = ("-created_at",)
     list_per_page = 50
     # Without this the patient column is an N+1 on every page load, which is
     # the number one cause of "the admin is slow" (AUDIT 8.6).
-    list_select_related = ("patient",)
+    list_select_related = ("patient", "clinic")
     # A <select> rendering 50,000 patients would hang the browser (8.6). The
     # autocomplete endpoint resolves through PatientAdmin.get_queryset, which
     # is a ScopedModelAdmin - that is the leak in 8.7 point 4, closed, and
     # asserted in common/tests/test_admin_scoping.py.
     autocomplete_fields = ("patient",)
-    tenant_scoped_fks = ("patient",)
 
-    tenant_field = None  # Phase 4: "clinic_id"
+    # Live as of Phase 4.
+    tenant_field = "clinic_id"
+    tenant_scoped_fks = ("patient", "clinic")
 
     readonly_fields = (
+        "clinic",
         "patient",
         "symptoms",
         "days",
@@ -77,7 +79,7 @@ class TriageAssessmentAdmin(AuditedModelAdmin, SimpleHistoryAdmin):
     )
 
     fieldsets = (
-        ("Input", {"fields": ("patient", "symptoms", "days")}),
+        ("Input", {"fields": ("clinic", "patient", "symptoms", "days")}),
         (
             "Output",
             {"fields": ("abstained", "differential", "urgency_level", "urgency_score")},

@@ -30,12 +30,42 @@ class HealthGuardAdminSite(UnfoldAdminSite):
     index_title = "Operations overview"
     enable_nav_sidebar = True
 
-    # Solicits the OTP token at login. Without this the gate in
-    # has_permission below would be unsatisfiable: Django's default admin
-    # login form has no token field, so nobody could ever become verified and
-    # the admin would simply be shut. templates/admin/login.html renders the
-    # extra field, because Unfold's own login template does not.
-    login_form = OTPAdminAuthenticationForm
+    #: Whatever Unfold assigned in its __init__, kept as the form to use when
+    #: no second factor is required. See the setter below.
+    _fallback_login_form = None
+
+    @property
+    def login_form(self):
+        """Solicit an OTP token only when a second factor is actually required.
+
+        Without the OTP form the gate in :meth:`has_permission` would be
+        unsatisfiable - Django's default admin login has no token field, so
+        nobody could become verified and the admin would simply be shut.
+
+        But it has to be **conditional**, which the first version of this was
+        not. ``OTPAuthenticationFormMixin.clean_otp`` raises ``token_required``
+        whenever no token is supplied, regardless of whether the user has any
+        device. So an unconditional OTP form meant password-only sign-in failed
+        even with ``ADMIN_REQUIRE_2FA=False`` - the development escape hatch let
+        nobody in, which is how a 2FA requirement ends up being ripped out
+        rather than configured.
+
+        Read per request rather than fixed at startup, so the test suite and a
+        development machine can flip the setting without rebuilding the site.
+        """
+        if getattr(settings, "ADMIN_REQUIRE_2FA", True):
+            return OTPAdminAuthenticationForm
+        return self._fallback_login_form
+
+    @login_form.setter
+    def login_form(self, value):
+        """Accept the assignment Unfold makes in its ``__init__``.
+
+        ``UnfoldAdminSite.__init__`` does ``self.login_form = AuthenticationForm``.
+        A read-only property turns that into an AttributeError at startup, so
+        the assignment is stored as the no-2FA fallback instead of refused.
+        """
+        self._fallback_login_form = value
 
     def has_permission(self, request) -> bool:
         """Staff access requires a verified second factor (AUDIT 8.10).

@@ -15,6 +15,7 @@ from django.views.decorators.http import require_http_methods
 from apps.consent.services.consent_service import ConsentService
 from apps.patients.forms import IntakeForm
 from apps.patients.services.patient_service import PatientService
+from common.middleware.tenancy import tenant_of
 from utils.exceptions.domain import DomainError
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,7 @@ def register(request):
                     height_cm=data["height_cm"],
                     weight_kg=data["weight_kg"],
                     consent_given=data["consent"],
+                    clinic=tenant_of(request).clinic,
                 )
             except DomainError as exc:
                 # A rule the form could not express on its own; surface it as a

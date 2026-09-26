@@ -40,7 +40,17 @@ clinical meaning is danger - never on a control, never as chrome (AUDIT 8.3).
 <h2 class="font-semibold mb-4 text-font-important-light dark:text-font-important-dark">
     {% translate "Operations" %}
 </h2>
-<div class="grid gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-4">
+<div class="grid gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "Active clinics" %}</p>
+        <p class="font-semibold text-2xl mt-1">{{ dashboard.operations.clinics }}</p>
+    {% endcomponent %}
+
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">{% translate "Doctors" %}</p>
+        <p class="font-semibold text-2xl mt-1">{{ dashboard.operations.doctors }}</p>
+    {% endcomponent %}
+
     {% component "unfold/components/card.html" with class="p-6" %}
         <p class="text-subtle text-xs uppercase tracking-wide">{% translate "Patients" %}</p>
         <p class="font-semibold text-2xl mt-1">{{ dashboard.operations.patients }}</p>
@@ -60,7 +70,7 @@ clinical meaning is danger - never on a control, never as chrome (AUDIT 8.3).
         <p class="text-subtle text-xs uppercase tracking-wide">{% translate "Anonymous" %}</p>
         <p class="font-semibold text-2xl mt-1">{{ dashboard.operations.anonymous_share }}%</p>
         <p class="text-subtle text-xs mt-1">
-            {% translate "checks run without giving any details" %}
+            {% translate "checks with no details given" %}
         </p>
     {% endcomponent %}
 </div>
@@ -158,6 +168,58 @@ clinical meaning is danger - never on a control, never as chrome (AUDIT 8.3).
                 older than {{ years }} years
             {% endblocktranslate %}
         </p>
+    {% endcomponent %}
+</div>
+
+{# ---------- Row 3b: the deadline clocks (AUDIT 4.1, 8.5) ---------- #}
+<div class="grid gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-3">
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">
+            {% translate "Erasure notices open" %}
+        </p>
+        <p class="font-semibold text-2xl mt-1">{{ dashboard.compliance.retention_notices_open }}</p>
+        <p class="text-subtle text-xs mt-1">
+            {% translate "48h notice given, awaiting erasure" %}
+        </p>
+    {% endcomponent %}
+
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">
+            {% translate "Data requests open" %}
+        </p>
+        <p class="font-semibold text-2xl mt-1 {% if dashboard.compliance.dsr_overdue %}text-amber-600 dark:text-amber-400{% endif %}">
+            {{ dashboard.compliance.dsr_open }}
+        </p>
+        <p class="text-subtle text-xs mt-1">
+            {% if dashboard.compliance.dsr_overdue %}
+                {% blocktranslate with n=dashboard.compliance.dsr_overdue %}{{ n }} past the 90-day SLA{% endblocktranslate %}
+            {% else %}
+                {% translate "all within the 90-day SLA" %}
+            {% endif %}
+        </p>
+    {% endcomponent %}
+
+    {# The one place besides clinical urgency where red is correct: an        #}
+    {# unreported breach past 72 hours is danger, not chrome (AUDIT 8.3).    #}
+    {% component "unfold/components/card.html" with class="p-6" %}
+        <p class="text-subtle text-xs uppercase tracking-wide">
+            {% translate "Breach report clock" %}
+        </p>
+        {% if dashboard.compliance.breach_open %}
+            <p class="font-semibold text-2xl mt-1 {% if dashboard.compliance.breach_overdue %}text-red-600 dark:text-red-400{% else %}text-amber-600 dark:text-amber-400{% endif %}">
+                {{ dashboard.compliance.breach_hours_remaining }}h
+            </p>
+            <p class="text-subtle text-xs mt-1">
+                {% if dashboard.compliance.breach_overdue %}
+                    {% translate "OVERDUE - report to the Board now" %}
+                {% else %}
+                    {% blocktranslate with n=dashboard.compliance.breach_open %}{{ n }} open, 72h from detection{% endblocktranslate %}
+                {% endif %}
+            </p>
+        {% else %}
+            <p class="font-semibold text-2xl mt-1">&mdash;</p>
+            <p class="text-subtle text-xs mt-1">{% translate "no open incidents" %}</p>
+        {% endif %}
     {% endcomponent %}
 </div>
 

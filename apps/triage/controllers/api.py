@@ -20,6 +20,7 @@ from apps.triage.serializers import (
 )
 from apps.triage.services import predictor
 from apps.triage.services.assessment_service import AssessmentService
+from common.middleware.tenancy import tenant_of
 from utils.exceptions.domain import ServiceUnavailableError
 
 INTAKE_SESSION_KEY = "patient_id"
@@ -67,6 +68,7 @@ class TriageCheckView(APIView):
                 symptoms=serializer.validated_data["symptoms"],
                 days=serializer.validated_data["days"],
                 patient=patient,
+                clinic=tenant_of(request).clinic,
             )
         except predictor.ModelUnavailable as exc:
             # Mapped to a domain error so the handler renders the standard

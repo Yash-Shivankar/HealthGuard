@@ -32,6 +32,13 @@ from datetime import timedelta
 from django.core.cache import cache
 from django.utils import timezone
 
+from apps.accounts.models import Role
+from apps.accounts.repositories.membership_repository import ClinicRepository
+from apps.compliance.repositories.compliance_repository import (
+    BreachRepository,
+    DSRRepository,
+    RetentionRepository,
+)
 from apps.consent.repositories.consent_repository import ConsentRepository
 from apps.patients.repositories.patient_repository import PatientRepository
 from apps.triage.models import UrgencyLevel
@@ -49,11 +56,12 @@ REVIEW_SLA_HOURS = 24
 RETENTION_YEARS = 3
 RETENTION_WARNING_DAYS = 30
 
+#: Still genuinely not measured. Everything the audit lists for Phase 4 is now
+#: live; what remains needs the ABDM integration from Phases 5-6.
 PENDING_TILES = (
-    "Active clinics and doctors (Phase 4, accounts app)",
-    "ABDM records pushed this month (Phases 5-6)",
-    "Open data-subject requests against the 90-day SLA (Phase 4)",
-    "Breach-report clock, 72 hours (Phase 4)",
+    "ABDM records pushed this month, which the DHIS incentive pays on (Phases 5-6)",
+    "Consent artefacts expiring in 30 days - needs consent expiry, which arrives "
+    "with ABDM HIE-CM consent in Phase 6",
 )
 
 
@@ -65,10 +73,18 @@ class DashboardService:
         patients: PatientRepository | None = None,
         consent: ConsentRepository | None = None,
         assessments: AssessmentRepository | None = None,
+        clinics: ClinicRepository | None = None,
+        retention: RetentionRepository | None = None,
+        dsr: DSRRepository | None = None,
+        breaches: BreachRepository | None = None,
     ):
         self.patients = patients or PatientRepository()
         self.consent = consent or ConsentRepository()
         self.assessments = assessments or AssessmentRepository()
+        self.clinics = clinics or ClinicRepository()
+        self.retention = retention or RetentionRepository()
+        self.dsr = dsr or DSRRepository()
+        self.breaches = breaches or BreachRepository()
 
     def summary(self, *, use_cache: bool = True) -> dict:
         if use_cache:
@@ -98,6 +114,10 @@ class DashboardService:
         since = timezone.now() - timedelta(days=1)
         total = self.assessments.count()
         return {
+            # The DHIS incentive is paid on record volume, so clinic and
+            # clinician counts are the numbers that scale revenue (AUDIT 8.5).
+            "clinics": self.clinics.count_active(),
+            "doctors": self.clinics.count_active_staff_by_role(Role.DOCTOR),
             "patients": self.patients.count(),
             "assessments_today": self.assessments.count_since(since),
             "assessments_total": total,
@@ -137,12 +157,24 @@ class DashboardService:
         warning_cutoff = retention_cutoff + timedelta(days=RETENTION_WARNING_DAYS)
         states = self.consent.state_counts()
 
+        breach = self.breaches.most_urgent_open()
+
         return {
             "consent_active": states["active"],
             "consent_withdrawn": states["withdrawn"],
             "approaching_retention": self.patients.count_created_before(warning_cutoff),
             "past_retention": self.patients.count_created_before(retention_cutoff),
             "retention_years": RETENTION_YEARS,
+            # Notices already issued and waiting out their 48 hours.
+            "retention_notices_open": self.retention.count_open(),
+            # 90-day grievance and rights SLA.
+            "dsr_open": self.dsr.count_open(),
+            "dsr_overdue": self.dsr.count_overdue(),
+            # The 72-hour breach clock. None when nothing is open, which is the
+            # state you want it in - the tile should be absent, not zero.
+            "breach_open": self.breaches.count_open(),
+            "breach_hours_remaining": breach.hours_remaining if breach else None,
+            "breach_overdue": bool(breach and breach.is_overdue),
         }
 
     # --- Charts ------------------------------------------------------------
@@ -208,3 +240,21 @@ def unreviewed_badge(request) -> int | None:
     if not request.user.has_perm("triage.view_triageassessment"):
         return None
     return AssessmentRepository().count_unreviewed() or None
+
+
+def open_dsr_badge(request) -> int | None:
+    """Sidebar badge: open data-subject requests on the 90-day clock."""
+    if not request.user.has_perm("compliance.view_datasubjectrequest"):
+        return None
+    return DSRRepository().count_open() or None
+
+
+def open_breach_badge(request) -> int | None:
+    """Sidebar badge: unreported breaches on the 72-hour clock.
+
+    None when nothing is open, which is the state you want - an absent badge
+    rather than a zero that reads like a broken counter.
+    """
+    if not request.user.has_perm("compliance.view_breachincident"):
+        return None
+    return BreachRepository().count_open() or None

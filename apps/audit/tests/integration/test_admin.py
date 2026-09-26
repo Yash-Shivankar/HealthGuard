@@ -90,6 +90,55 @@ class TestDashboard:
         assert "Not measured yet" in body
         assert PENDING_TILES[0] in body
 
+    def test_the_phase_4_deadline_clocks_are_live(self, admin_client_2fa_off, settings):
+        """Clinics, the 90-day DSR SLA and the 72-hour breach clock were all
+        listed as "not measured" in Phase 3. They are measured now.
+        """
+        body = admin_client_2fa_off.get(f"/{settings.ADMIN_URL}").content.decode()
+        for heading in (
+            "Active clinics",
+            "Doctors",
+            "Data requests open",
+            "Breach report clock",
+            "Erasure notices open",
+        ):
+            assert heading in body, heading
+
+    def test_the_breach_clock_counts_down_when_an_incident_is_open(
+        self, admin_client_2fa_off, settings
+    ):
+        from apps.compliance.models import BreachIncident
+
+        BreachIncident.objects.create(summary="Test incident")
+        summary = DashboardService().summary(use_cache=False)["compliance"]
+
+        assert summary["breach_open"] == 1
+        assert summary["breach_hours_remaining"] is not None
+        assert 0 < summary["breach_hours_remaining"] <= 72
+        assert summary["breach_overdue"] is False
+
+    def test_an_overdue_breach_reports_negative_hours(self):
+        """Clamping at zero would hide how late something is, and how late
+        matters more than the fact of being late.
+        """
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from apps.compliance.models import BreachIncident
+
+        detected = timezone.now() - timedelta(hours=100)
+        BreachIncident.objects.create(summary="Old incident", detected_at=detected)
+
+        summary = DashboardService().summary(use_cache=False)["compliance"]
+        assert summary["breach_overdue"] is True
+        assert summary["breach_hours_remaining"] < 0
+
+    def test_the_breach_tile_is_absent_rather_than_zero_when_clear(self):
+        summary = DashboardService().summary(use_cache=False)["compliance"]
+        assert summary["breach_open"] == 0
+        assert summary["breach_hours_remaining"] is None
+
     def test_summary_counts_are_correct(self, assessment, patient):
         summary = DashboardService().summary(use_cache=False)
         assert summary["operations"]["patients"] == 1

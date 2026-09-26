@@ -26,8 +26,14 @@ Then:
 
 ```bash
 python manage.py migrate
+python manage.py seed_roles        # the four role groups and their permissions
 python manage.py runserver
 ```
+
+`seed_roles` is idempotent, so run it on every deploy. Roles defined in a
+migration drift the moment someone edits a group in the admin; re-asserting them
+from `apps/accounts/management/commands/seed_roles.py` keeps that file the source
+of truth.
 
 ### The admin
 
@@ -127,9 +133,11 @@ config/              Django project package only
   ├── api.py         /api/v1/ router
   └── admin.py       custom AdminSite: branding and the 2FA gate
 apps/                one app per bounded context
+  ├── accounts/      clinics, staff memberships, roles - the tenant boundary
   ├── patients/      patient master
   ├── consent/       DPDP consent artefacts
   ├── triage/        symptom intake and prediction
+  ├── compliance/    retention notices, data requests, breach incidents
   └── audit/         read-access log and the ops dashboard
 common/              middleware, base admin classes, shared building blocks
 utils/               validators, domain exceptions, logging, pagination
@@ -157,10 +165,37 @@ The rule that keeps it honest: **controllers never touch the ORM, services
 never touch HTTP, repositories never contain business logic.** Violate it once
 and you are back to the 193-line `views.py` the audit found.
 
-The apps the audit provisions but that do not exist yet — `accounts`,
-`encounters`, `abdm`, `audit` — are deliberately absent rather than scaffolded
-empty. They belong to Phases 4–6, and an empty app is a liability, not a head
-start.
+The apps the audit provisions but that do not exist yet — `encounters` and
+`abdm` — are deliberately absent rather than scaffolded empty. They belong to
+Phases 5–6, and an empty app is a liability, not a head start.
+
+## Multi-tenancy
+
+A `Clinic` is the tenant. Staff reach it through a `Membership`, not a field on
+the user, because a locum doctor works at more than one clinic and duplicate
+accounts would destroy the audit trail. Platform operations is a **role**, not
+`is_superuser` — the audit is explicit that handing out `is_superuser` bypasses
+every scoping check.
+
+The rule that matters: **a signed-in user with no clinic sees nothing, not
+everything.** Cross-clinic access requires the explicit `platform_ops` role.
+`apps/accounts/tests/integration/test_tenant_isolation.py` asserts all four
+scoping paths against two real clinics, plus that fail-closed case.
+
+## Retention
+
+DPDP retention is enforced by code, in two passes, on a schedule:
+
+```bash
+python manage.py run_retention --notices   # open notices for dormant records
+python manage.py run_retention --erase     # erase those whose 48h has elapsed
+```
+
+They are separate on purpose — a single pass that noticed and erased together
+would satisfy the letter of "give notice" and none of its purpose. Both are
+idempotent. Run them from cron, a systemd timer or Task Scheduler; there is no
+Celery broker in this project yet, and adding one to run two daily jobs would be
+infrastructure to maintain for no benefit.
 
 ## What this model is, honestly
 
@@ -191,6 +226,10 @@ measurable.
       the old one is redacted throughout history.
 - [ ] Enrol a TOTP device for every staff account and confirm
       `ADMIN_REQUIRE_2FA=True` in the deployed environment.
+- [ ] Schedule `run_retention --notices` and `--erase` as daily jobs. Retention
+      is enforced in code, but nothing enforces the schedule.
+- [ ] Name the grievance contact on the `DataSubjectRequest` intake path. The
+      90-day clock is tracked; the public way to start one is not built.
 - [ ] Decide whether ops staff will be on a fixed IP or VPN (AUDIT §11.7). If
       so, set `ADMIN_IP_ALLOWLIST` — it is the cheapest high-value control
       available and it ships disabled.

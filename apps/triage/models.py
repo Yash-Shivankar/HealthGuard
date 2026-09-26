@@ -39,6 +39,17 @@ class UrgencyLevel(models.TextChoices):
 
 
 class TriageAssessment(models.Model):
+    # Denormalised from the patient so a scoped query does not have to join,
+    # and so an anonymous check run inside a clinic can still be attributed to
+    # it. Kept in step by AssessmentService, which is the only writer.
+    clinic = models.ForeignKey(
+        "accounts.Clinic",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="assessments",
+    )
+
     patient = models.ForeignKey(
         "patients.Patient",
         on_delete=models.CASCADE,
@@ -92,6 +103,8 @@ class TriageAssessment(models.Model):
             models.Index(fields=["-created_at"]),
             models.Index(fields=["review_state", "-created_at"]),
             models.Index(fields=["urgency_level", "-created_at"]),
+            models.Index(fields=["clinic", "-created_at"]),
+            models.Index(fields=["clinic", "review_state"]),
         ]
 
     def __str__(self) -> str:

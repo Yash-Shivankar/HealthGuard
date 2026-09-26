@@ -11,6 +11,7 @@ from apps.consent.serializers import ConsentArtefactSerializer
 from apps.consent.services.consent_service import ConsentService
 from apps.patients.serializers import PatientIntakeSerializer, PatientReadSerializer
 from apps.patients.services.patient_service import PatientService
+from common.middleware.tenancy import tenant_of
 
 INTAKE_SESSION_KEY = "patient_id"
 
@@ -34,6 +35,10 @@ class PatientIntakeView(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
+        # An intake taken by signed-in clinic staff belongs to their clinic;
+        # a self-service intake from the public page belongs to none. Read from
+        # the resolved tenant rather than accepting a clinic in the payload -
+        # a client-supplied tenant id is a cross-tenant write waiting to happen.
         patient = PatientService().register(
             name=data["name"],
             contact=data["contact"],
@@ -41,6 +46,7 @@ class PatientIntakeView(APIView):
             height_cm=data["height_cm"],
             weight_kg=data["weight_kg"],
             consent_given=data["consent"],
+            clinic=tenant_of(request).clinic,
         )
 
         # Only the row id goes into the session - never patient data.

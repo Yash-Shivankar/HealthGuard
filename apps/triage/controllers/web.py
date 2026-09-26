@@ -20,6 +20,7 @@ from apps.patients.services.patient_service import PatientService
 from apps.triage.forms import SymptomCheckForm
 from apps.triage.services import predictor
 from apps.triage.services.assessment_service import AssessmentService, humanise
+from common.middleware.tenancy import tenant_of
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +60,10 @@ def predict(request):
 
     try:
         result = AssessmentService().assess(
-            symptoms=selected, days=days, patient=patient
+            symptoms=selected,
+            days=days,
+            patient=patient,
+            clinic=tenant_of(request).clinic,
         )
     except predictor.ModelUnavailable:
         logger.exception("Triage model unavailable")

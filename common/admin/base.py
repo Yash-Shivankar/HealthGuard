@@ -23,15 +23,24 @@ first:
    ``get_queryset``, which is what that view calls; the test that proves it
    lives in ``common/tests/test_admin_scoping.py``.
 
-## Why this exists before there are tenants
+## Fail closed
 
-There is no ``Clinic`` model yet - it arrives in Phase 4 with the ``accounts``
-app. Building one now would be guessing at a design the audit has not settled.
+This is the rule that matters most, and it changed in Phase 4 when tenants
+became real:
 
-So the machinery is here and tested, with the tenant lookup as the single
-pluggable piece: :meth:`ScopedModelAdmin.get_tenant` returns ``None`` today, so
-nothing is restricted, and Phase 4 changes one method. The discipline cannot be
-skipped later because it is already written and already under test.
+    A confined user with no clinic sees **nothing**, not everything.
+
+While ``Clinic`` did not exist, ``get_tenant()`` returned ``None`` for
+everybody, and "no tenant" harmlessly meant "nothing to scope by". Now that
+tenants exist, treating ``None`` as unrestricted would mean a staff account
+created before anyone assigned it a clinic could read every patient in the
+system. So an unresolved tenant yields an empty queryset, and seeing across
+clinics requires the explicit ``PLATFORM_OPS`` role - never the absence of a
+membership.
+
+``tenant_field = None`` still means "this model is global master data and is not
+scoped". That is a per-model decision, not a per-user one, which is why the two
+cases are kept apart.
 """
 
 from __future__ import annotations
@@ -56,34 +65,73 @@ class ScopedModelAdmin(UnfoldModelAdmin):
     #: FK field names on this model that must be limited to the same tenant.
     tenant_scoped_fks: tuple[str, ...] = ()
 
-    def get_tenant(self, request):
-        """The tenant this request may see. ``None`` means unrestricted.
+    #: The model that *is* the tenant. A foreign key pointing at it is a
+    #: special case: it cannot be routed through that model's own admin,
+    #: because the tenant table is deliberately unscoped - scoping it would
+    #: stop a clinic owner seeing their own clinic record. So an FK to the
+    #: tenant is narrowed directly to the caller's tenant instead.
+    #:
+    #: Found by the Phase 4 isolation tests: without this, the clinic dropdown
+    #: on a scoped model offered *every* clinic, and a crafted POST could move
+    #: a patient to another clinic.
+    tenant_model_label: str = "accounts.Clinic"
 
-        Phase 4 replaces the body of this method with the real lookup once
-        ``accounts`` exists. Everything else in this class already routes
-        through it.
+    def get_tenant(self, request):
+        """The clinic this request may see, or ``None`` if unresolved.
+
+        Populated by ``common.middleware.tenancy.TenancyMiddleware`` from the
+        caller's active membership. ``None`` is **not** a licence to see
+        everything - see the module docstring.
         """
         return getattr(request.user, "clinic_id", None)
 
     def is_unrestricted(self, request) -> bool:
-        """Superusers and untenanted users see everything.
+        """Whether this request may see across clinics.
 
-        Note what this implies and AUDIT 8.8 states explicitly: **do not hand
-        out ``is_superuser``**. It bypasses every check below.
+        True only for a superuser or the explicit ``PLATFORM_OPS`` role. It is
+        deliberately **not** true merely because no tenant resolved.
+
+        AUDIT 8.8: **do not hand out ``is_superuser``** - it bypasses every
+        check below. Use ``PLATFORM_OPS`` for support access, which is narrower,
+        auditable and revocable.
         """
-        if getattr(request.user, "is_superuser", False):
+        user = getattr(request, "user", None)
+        if user is None:
+            return False
+        if getattr(user, "is_superuser", False):
             return True
-        return self.get_tenant(request) is None
+        return bool(getattr(user, "tenant_unrestricted", False))
 
     def _scope(self, queryset, request):
-        if self.tenant_field is None or self.is_unrestricted(request):
+        # Global master data: not scoped by anyone's clinic.
+        if self.tenant_field is None:
             return queryset
-        return queryset.filter(**{self.tenant_field: self.get_tenant(request)})
+        if self.is_unrestricted(request):
+            return queryset
+
+        tenant = self.get_tenant(request)
+        if tenant is None:
+            # Fail closed. An unassigned account must not inherit the whole
+            # database as a side effect of having no clinic.
+            logger.warning(
+                "Refusing %s to a confined caller with no clinic",
+                self.model._meta.label,
+                extra={"event": "admin_scope_denied"},
+            )
+            return queryset.none()
+
+        return queryset.filter(**{self.tenant_field: tenant})
 
     def _belongs_to_tenant(self, obj, request) -> bool:
-        if obj is None or self.tenant_field is None or self.is_unrestricted(request):
+        if obj is None or self.tenant_field is None:
             return True
-        return getattr(obj, self.tenant_field, None) == self.get_tenant(request)
+        if self.is_unrestricted(request):
+            return True
+
+        tenant = self.get_tenant(request)
+        if tenant is None:
+            return False
+        return getattr(obj, self.tenant_field, None) == tenant
 
     # --- 1. list view ------------------------------------------------------
     def get_queryset(self, request):
@@ -91,23 +139,37 @@ class ScopedModelAdmin(UnfoldModelAdmin):
         return self._scope(super().get_queryset(request), request)
 
     # --- 2. FK dropdowns ---------------------------------------------------
+    # This also validates a POST: Django checks the submitted value against the
+    # field's queryset, so narrowing it here is what stops a hand-rolled form
+    # assigning a record to another tenant.
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name in self.tenant_scoped_fks and not self.is_unrestricted(request):
-            related_admin = self.admin_site._registry.get(db_field.remote_field.model)
-            if isinstance(related_admin, ScopedModelAdmin):
-                # Route through the related admin so one rule governs both.
-                kwargs["queryset"] = related_admin.get_queryset(request)
-            else:
-                # The related model has no scoped admin. Refusing loudly beats
-                # rendering an unscoped dropdown that leaks other tenants.
-                logger.error(
-                    "%s scopes FK %r but %s has no ScopedModelAdmin; "
-                    "returning an empty queryset rather than leaking",
-                    type(self).__name__,
-                    db_field.name,
-                    db_field.remote_field.model._meta.label,
+            related_model = db_field.remote_field.model
+            manager = related_model._default_manager
+
+            if related_model._meta.label == self.tenant_model_label:
+                # The FK points at the tenant table itself. Offer only the
+                # caller's own tenant; see tenant_model_label above.
+                tenant = self.get_tenant(request)
+                kwargs["queryset"] = (
+                    manager.filter(pk=tenant) if tenant is not None else manager.none()
                 )
-                kwargs["queryset"] = db_field.remote_field.model._default_manager.none()
+            else:
+                related_admin = self.admin_site._registry.get(related_model)
+                if isinstance(related_admin, ScopedModelAdmin):
+                    # Route through the related admin so one rule governs both.
+                    kwargs["queryset"] = related_admin.get_queryset(request)
+                else:
+                    # No scoped admin on the related model. Refusing loudly
+                    # beats rendering a dropdown that leaks other tenants.
+                    logger.error(
+                        "%s scopes FK %r but %s has no ScopedModelAdmin; "
+                        "returning an empty queryset rather than leaking",
+                        type(self).__name__,
+                        db_field.name,
+                        related_model._meta.label,
+                    )
+                    kwargs["queryset"] = manager.none()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     # --- 3. object-level permissions ---------------------------------------

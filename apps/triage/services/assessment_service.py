@@ -45,7 +45,13 @@ class AssessmentService:
         self.repository = repository or AssessmentRepository()
 
     def assess(
-        self, *, symptoms: list[str], days: int, patient=None, persist: bool = True
+        self,
+        *,
+        symptoms: list[str],
+        days: int,
+        patient=None,
+        clinic=None,
+        persist: bool = True,
     ) -> AssessmentResult:
         """Run a check and, by default, record it.
 
@@ -72,10 +78,18 @@ class AssessmentService:
             symptoms=symptoms,
             days=days,
             patient=patient,
+            # Denormalised from the patient when not given explicitly, so a
+            # scoped query never has to join to find out whose check this was.
+            clinic=clinic if clinic is not None else getattr(patient, "clinic", None),
             differential=differential,
             assessed_urgency=assessed_urgency,
             persist=persist,
         )
+
+        # Using the service is an interaction, so it stops any retention clock
+        # that was already running against this person (AUDIT 4.1).
+        if persist and patient is not None:
+            self._cancel_retention(patient)
 
         return AssessmentResult(
             assessment=assessment,
@@ -86,12 +100,26 @@ class AssessmentService:
             remedies=remedies,
         )
 
+    @staticmethod
+    def _cancel_retention(patient) -> None:
+        # Imported here rather than at module scope: apps.compliance depends on
+        # apps.patients, and a top-level import would close the cycle.
+        from apps.compliance.services.retention_service import RetentionService
+
+        try:
+            RetentionService().cancel_for_patient(patient)
+        except Exception:  # noqa: BLE001
+            # A triage result must not fail because a retention bookkeeping
+            # write did. The notice stays open and the next pass re-checks it.
+            logger.exception("Could not cancel retention notice after interaction")
+
     def _record(
-        self, *, symptoms, days, patient, differential, assessed_urgency, persist
+        self, *, symptoms, days, patient, clinic, differential, assessed_urgency, persist
     ) -> TriageAssessment:
         artefact = predictor.artefact()
         fields = {
             "patient": patient,
+            "clinic": clinic,
             "symptoms": list(symptoms),
             "days": days,
             "abstained": differential.abstained,

@@ -27,6 +27,20 @@ mobile_validator = RegexValidator(
 class Patient(models.Model):
     """A person who has used, or is about to use, the symptom checker."""
 
+    # The tenant boundary. Nullable because the public symptom checker takes
+    # intake with no clinic attached, and forcing a clinic there would mean
+    # inventing one - but every scoped query treats null as "not this clinic's",
+    # so an unattached record is invisible to clinic staff rather than visible
+    # to all of them (AUDIT 8.7).
+    clinic = models.ForeignKey(
+        "accounts.Clinic",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="patients",
+        help_text="Null for a self-service intake not tied to a clinic.",
+    )
+
     name = models.CharField(max_length=100)
     contact = models.CharField(
         max_length=10,
@@ -68,6 +82,8 @@ class Patient(models.Model):
             # Lookup by number is how support finds a record; without this it
             # is a table scan once the table is real.
             models.Index(fields=["contact"]),
+            # Every scoped query filters on clinic first, so it leads.
+            models.Index(fields=["clinic", "-created_at"]),
         ]
 
     def __str__(self) -> str:

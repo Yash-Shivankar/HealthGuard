@@ -141,6 +141,53 @@ class TestTwoFactorFlow:
         assert client.get("/internal-ops/otp_totp/totpdevice/add/").status_code == 200
 
 
+class TestTheDevelopmentEscapeHatchActuallyWorks:
+    """ADMIN_REQUIRE_2FA=False must let a password-only sign-in through.
+
+    This is a regression suite for a real bug. ``login_form`` was set to
+    django-otp's form unconditionally, and ``clean_otp`` raises
+    ``token_required`` whenever no token is supplied - *regardless of whether
+    the user has a device*. So with the gate off, nobody could sign in at all.
+
+    That failure mode matters more than it looks: an escape hatch that lets
+    nobody in is how a 2FA requirement gets ripped out rather than configured.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _no_2fa(self, settings):
+        settings.ADMIN_REQUIRE_2FA = False
+
+    def test_password_only_sign_in_succeeds(self, client, root):
+        response = client.post(
+            ADMIN_LOGIN, {"username": "root", "password": "pw-correct-horse"}
+        )
+        assert response.status_code == 302
+        assert client.get(reverse("admin:index")).status_code == 200
+
+    def test_the_login_page_does_not_ask_for_a_token(self, client):
+        body = client.get(ADMIN_LOGIN).content.decode()
+        assert 'name="otp_token"' not in body
+
+    def test_turning_the_gate_back_on_restores_the_token_field(self, client, settings):
+        settings.ADMIN_REQUIRE_2FA = True
+        body = client.get(ADMIN_LOGIN).content.decode()
+        assert 'name="otp_token"' in body
+
+    def test_the_site_still_starts_when_unfold_assigns_login_form(self):
+        """Unfold's __init__ does ``self.login_form = AuthenticationForm``.
+
+        A read-only property turned that into an AttributeError at startup and
+        the whole application failed to boot, so the setter is load-bearing.
+        """
+        from django.contrib.auth.forms import AuthenticationForm
+
+        from config.admin import HealthGuardAdminSite
+
+        site = HealthGuardAdminSite()
+        site.login_form = AuthenticationForm
+        assert site.login_form is AuthenticationForm
+
+
 class TestIPAllowlist:
     def test_empty_allowlist_restricts_nothing(self, settings):
         """AUDIT 11.7 - will ops be on a fixed IP? - is unanswered, so this
