@@ -158,3 +158,47 @@ class TestDependencyDirection:
                 ):
                     offenders.append(str(path.relative_to(APPS_DIR)))
         assert not offenders, f"apps/ imports the ml training package: {offenders}"
+
+
+class TestThrottleScopesAreConfigured:
+    """Every ``throttle_scope`` a view declares must have a configured rate.
+
+    This has now bitten three times. A view that sets ``throttle_scope`` as a
+    class attribute resolves it regardless of the default throttle classes, and
+    a missing key raises ``ImproperlyConfigured`` **at request time** - so it
+    looks like a broken endpoint rather than a misconfiguration, and only the
+    tests that happen to hit that view fail.
+    """
+
+    @staticmethod
+    def _declared_scopes() -> set[str]:
+        scopes = set()
+        for path in APPS_DIR.rglob("controllers/*.py"):
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            for node in ast.walk(tree):
+                if (
+                    isinstance(node, ast.Assign)
+                    and isinstance(node.value, ast.Constant)
+                    and isinstance(node.value.value, str)
+                    and any(
+                        isinstance(t, ast.Name) and t.id == "throttle_scope"
+                        for t in node.targets
+                    )
+                ):
+                    scopes.add(node.value.value)
+        return scopes
+
+    def test_every_declared_scope_has_a_rate(self, settings):
+        configured = set(settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"])
+        missing = self._declared_scopes() - configured
+        assert not missing, (
+            f"throttle_scope(s) {sorted(missing)} have no entry in "
+            "DEFAULT_THROTTLE_RATES. Add them to config/settings/base.py and to "
+            "the test settings override."
+        )
+
+    def test_at_least_one_scope_is_declared(self):
+        """Guards the guard: an AST walk that silently matches nothing would
+        make the test above pass forever.
+        """
+        assert self._declared_scopes(), "expected some view to declare a throttle_scope"

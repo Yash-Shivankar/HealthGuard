@@ -7,10 +7,19 @@ apply lives in apps.triage.services (AUDIT 7.1).
 from __future__ import annotations
 
 from drf_spectacular.utils import extend_schema
-from rest_framework import status
+from rest_framework import serializers, status
+from rest_framework.filters import OrderingFilter
+from rest_framework.generics import ListAPIView
+from rest_framework.permissions import DjangoModelPermissions
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
+
+from apps.audit.models import AuditAction
+from apps.audit.services.audit_service import AuditService
+from apps.triage.models import ReviewState, TriageAssessment
+from apps.triage.repositories.assessment_repository import AssessmentRepository
+from common.api.scoped import RequireClinicMixin, TenantScopedMixin
 
 from apps.patients.services.patient_service import PatientService
 from apps.triage.serializers import (
@@ -83,3 +92,118 @@ class TriageCheckView(APIView):
         return Response(
             TriageResponseSerializer(payload).data, status=status.HTTP_201_CREATED
         )
+
+
+class AssessmentListSerializer(serializers.ModelSerializer):
+    """The review queue row.
+
+    Shows the masked patient name and the top suggestion, not the full
+    differential - a queue is for deciding what to open next.
+    """
+
+    patient_name = serializers.SerializerMethodField()
+    top_disease = serializers.CharField(read_only=True, allow_null=True)
+    top_confidence = serializers.FloatField(read_only=True, allow_null=True)
+    needs_review = serializers.BooleanField(read_only=True)
+    urgency_label = serializers.CharField(
+        source="get_urgency_level_display", read_only=True
+    )
+
+    class Meta:
+        model = TriageAssessment
+        fields = (
+            "id",
+            "patient",
+            "patient_name",
+            "symptoms",
+            "days",
+            "abstained",
+            "top_disease",
+            "top_confidence",
+            "urgency_level",
+            "urgency_label",
+            "review_state",
+            "needs_review",
+            "created_at",
+        )
+        read_only_fields = fields
+
+    def get_patient_name(self, obj) -> str:
+        return obj.patient.name if obj.patient_id else "Anonymous"
+
+
+class AssessmentListView(TenantScopedMixin, RequireClinicMixin, ListAPIView):
+    """The clinician review queue for this clinic.
+
+    Oldest first by default, because the thing that matters is what has been
+    waiting longest - AUDIT 8.5's ageing indicator, as a list.
+    """
+
+    serializer_class = AssessmentListSerializer
+    permission_classes = [DjangoModelPermissions]
+    filter_backends = [OrderingFilter]
+    ordering_fields = ["created_at", "urgency_level", "review_state"]
+    ordering = ["created_at"]
+
+    def base_queryset(self):
+        return AssessmentRepository.all_for_queue()
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.request.query_params.get("unreviewed") == "true":
+            queryset = queryset.filter(review_state=ReviewState.UNREVIEWED)
+        return queryset
+
+
+class AssessmentReviewView(TenantScopedMixin, RequireClinicMixin, APIView):
+    """Clinician sign-off (AUDIT 4.3: TPG 2020 requires it before a record).
+
+    A PATCH rather than a PUT: this changes one field and must not be a way to
+    rewrite the clinical content, which is append-only.
+    """
+
+    permission_classes = [DjangoModelPermissions]
+    # DjangoModelPermissions resolves the model from get_queryset(), which the
+    # mixin scopes - so a cross-clinic id 404s without a per-view check.
+    serializer_class = AssessmentListSerializer
+
+    def base_queryset(self):
+        return AssessmentRepository.all_for_queue()
+
+    @extend_schema(
+        request=None,
+        responses=AssessmentListSerializer,
+        summary="Mark an assessment as reviewed by a clinician",
+    )
+    def patch(self, request, pk: int):
+        assessment = self.get_queryset().filter(pk=pk).first()
+        if assessment is None:
+            return Response(
+                {"error": {"code": "not_found", "message": "No such assessment."}},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if assessment.review_state != ReviewState.UNREVIEWED:
+            return Response(
+                {
+                    "error": {
+                        "code": "already_reviewed",
+                        "message": "That assessment has already been reviewed.",
+                    }
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        # save() rather than update(): the save is what writes the history row,
+        # and a sign-off with no trail of who signed it is not a sign-off.
+        assessment.review_state = ReviewState.REVIEWED
+        assessment.save(update_fields=["review_state"])
+
+        AuditService().record(
+            action=AuditAction.UPDATE,
+            actor=request.user,
+            obj=assessment,
+            request=request,
+            reason="clinician sign-off",
+        )
+        return Response(AssessmentListSerializer(assessment).data)

@@ -95,6 +95,48 @@ TEST_DATABASE_URL=postgres://healthguard:healthguard@127.0.0.1:5432/healthguard_
 Every test in `apps/triage/tests/integration/test_web_flow.py::TestCrashPaths`
 pins an exception the audit reproduced against the running application.
 
+## Frontend
+
+A React + TypeScript SPA under `frontend/`, built with Vite.
+
+```bash
+cd frontend
+npm install
+npm run dev        # http://localhost:5173, proxying /api to Django on :8000
+npm run build      # checks locale parity, typechecks, then bundles to dist/
+```
+
+Run Django on port 8000 alongside it. Vite proxies `/api` there, which keeps the
+session cookie first-party and means development exercises the same same-origin
+path production uses. CORS is configured for Vite's origin as well, for anyone
+who prefers to point `VITE_API_BASE_URL` straight at the API.
+
+Layout follows AUDIT §7.3:
+
+```
+frontend/src/
+├── pages/        patient/ · clinic/ · doctor/
+├── components/   common/ · clinical/ · layout/
+├── services/     api/ · hooks/ · store/
+├── utils/        validators/ · formatters/ · i18n/
+├── styles/       design tokens
+└── types/
+```
+
+**Multilingual from day one** (§7.3): English, Hindi and Marathi. `npm run build`
+fails if the locale files drift apart, because a half-translated page is worse
+than an untranslated one when the subject is someone's symptoms.
+
+**The symptom names are still English** even when the interface is not. They come
+from the model's feature names and the source dataset is English; translating 131
+clinical terms needs the clinician sign-off §11.6 asks for, and a mistranslated
+symptom changes what someone reports. The gap is visible rather than invented.
+
+Session authentication, not tokens: the session cookie is HttpOnly, so a
+cross-site script cannot read it, where a JWT in `localStorage` can be read by
+anything that gets onto the page. Staff sign-in here grants the clinic app only —
+the admin has its own 2FA gate and an API session does not satisfy it.
+
 ## API
 
 `/api/v1/`, with an OpenAPI schema at `/api/v1/schema/` and Swagger UI at
@@ -107,11 +149,20 @@ pins an exception the audit reproduced against the running application.
 | `DELETE /api/v1/patients/me/` | Withdraw consent and erase the record |
 | `GET /api/v1/triage/symptoms/` | The symptom vocabulary the model accepts |
 | `POST /api/v1/triage/check/` | Run a check, get a ranked differential |
+| `GET /api/v1/auth/session/` | Who is signed in, and which clinic they see |
+| `POST /api/v1/auth/login/` · `logout/` | Staff session for the clinic app |
+| `POST /api/v1/auth/clinic/` | Switch active clinic (locum working at two) |
+| `GET /api/v1/patients/` | Patients at the caller's clinic, scoped |
+| `GET /api/v1/triage/assessments/` | The clinician review queue, scoped |
+| `PATCH /api/v1/triage/assessments/<id>/review/` | Clinician sign-off |
 
 The API and the HTML pages call the same service layer, so they cannot drift.
-There is deliberately **no** endpoint that lists patients or fetches one by id:
-until the `accounts` app brings authentication and per-clinic scoping in
-Phase 4, that would be a cross-tenant leak with no tenants (AUDIT §8.7).
+
+**API scoping is separate from admin scoping.** `ScopedModelAdmin` overrides
+`ModelAdmin` hooks and a DRF view shares none of them, so `common/api/scoped.py`
+restates the same discipline for the API — and `apps/accounts/tests/integration/
+test_api_isolation.py` asserts it independently. A record at another clinic
+returns **404, not 403**: a 403 confirms the record exists.
 
 ## Retraining the model
 

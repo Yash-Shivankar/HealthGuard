@@ -33,6 +33,7 @@ env = environ.Env(
     DJANGO_SECURE_SSL_REDIRECT=(bool, True),
     DJANGO_SECURE_HSTS_SECONDS=(int, 31536000),
     DJANGO_ADMIN_URL=(str, "internal-ops/"),
+    DJANGO_CORS_ALLOWED_ORIGINS=(list, []),
     ADMIN_IP_ALLOWLIST=(list, []),
     ADMIN_SESSION_TIMEOUT_SECONDS=(int, 900),
     AXES_FAILURE_LIMIT=(int, 5),
@@ -92,6 +93,10 @@ THIRD_PARTY_APPS = [
     "rest_framework",
     "django_filters",
     "drf_spectacular",
+    # The SPA runs on its own origin in development (Vite on 5173), so the API
+    # has to opt in to those requests. In production the SPA is built and served
+    # from the same origin, and CORS_ALLOWED_ORIGINS is empty.
+    "corsheaders",
     # Full per-change snapshots on clinical models (AUDIT 8.9). The storage
     # cost against django-auditlog's leaner diffs is the trade-off; for
     # compliance work, showing an auditor the complete record as it stood on a
@@ -127,6 +132,9 @@ INSTALLED_APPS = UNFOLD_APPS + DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Must precede CommonMiddleware so a preflight gets its headers even when
+    # the request would otherwise be redirected.
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -256,6 +264,10 @@ REST_FRAMEWORK = {
         "anon": env.str("DJANGO_THROTTLE_ANON", default="60/hour"),
         "user": env.str("DJANGO_THROTTLE_USER", default="600/hour"),
         "triage": env.str("DJANGO_THROTTLE_TRIAGE", default="30/hour"),
+        # Its own scope. An unthrottled API login undoes the django-axes
+        # lockout, because axes counts attempts per view and a second door is a
+        # second budget.
+        "login": env.str("DJANGO_THROTTLE_LOGIN", default="20/hour"),
     },
     "EXCEPTION_HANDLER": "utils.exceptions.handlers.api_exception_handler",
 }
@@ -349,3 +361,17 @@ SIMPLE_HISTORY_HISTORY_CHANGE_REASON_USE_TEXT_FIELD = True
 
 # --- Unfold admin theme (AUDIT 8.2-8.4) -------------------------------------
 from config.settings.unfold import UNFOLD  # noqa: E402,F401
+
+
+# --- CORS (the SPA in development) ------------------------------------------
+# Empty in production: the built SPA is served from the same origin as the API,
+# so no cross-origin allowance is needed and granting one would be a gift.
+CORS_ALLOWED_ORIGINS = env("DJANGO_CORS_ALLOWED_ORIGINS")
+# Required for session auth: without it the browser sends no session cookie and
+# every request looks anonymous.
+CORS_ALLOW_CREDENTIALS = True
+# Django needs the SPA origin trusted for unsafe methods as well, or the CSRF
+# check rejects the request even with a valid token.
+CSRF_TRUSTED_ORIGINS = list(
+    dict.fromkeys(env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=[]) + CORS_ALLOWED_ORIGINS)
+)

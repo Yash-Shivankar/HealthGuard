@@ -11,6 +11,9 @@ tzdata==2025.2
 djangorestframework==3.16.1
 django-filter==25.2
 drf-spectacular==0.28.0
+# The SPA runs on its own origin in development; in production it is served from
+# the same origin and CORS_ALLOWED_ORIGINS is empty.
+django-cors-headers==4.9.0
 
 # --- Admin (AUDIT 8) ---
 # Unfold 0.107.0: MIT, supports Django 5.2/6.0/6.1 and Python 3.12-3.14, and

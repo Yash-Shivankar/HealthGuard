@@ -1,0 +1,77 @@
+/**
+ * Design tokens (AUDIT 8.3).
+ *
+ * The brand green #7cc576 measures 2.08:1 against white and fails WCAG 2.1 AA
+ * for every text size. It survives here only as --hg-primary-400, for
+ * decorative surfaces. Anything readable steps down:
+ *
+ *   --hg-primary-600  #16a34a  3.30:1  borders, icons, large text (>= 24px)
+ *   --hg-primary-700  #15803d  5.02:1  body text and filled buttons
+ *
+ * Filled buttons use 700, not 600: white label text on 600 is 3.30:1, which
+ * only passes for large text, and a button label is not large text.
+ *
+ * RED IS RESERVED FOR CLINICAL DANGER. Never for delete, cancel or any UI
+ * chrome. If red is spent on destructive buttons it is worthless when a
+ * red-flag symptom appears, so destructive actions are neutral with a
+ * confirmation step.
+ */
+
+:root {
+  /* Brand */
+  --hg-primary-50: #f0f9f0;
+  --hg-primary-100: #dcf0db;
+  --hg-primary-400: #7cc576; /* brand; decorative fills only, never text */
+  --hg-primary-600: #16a34a;
+  --hg-primary-700: #15803d;
+  --hg-primary-800: #116632;
+
+  /* Clinical status. Each is always paired with an icon and a text label. */
+  --hg-danger-600: #dc2626; /* clinical danger only */
+  --hg-danger-50: #fef2f2;
+  --hg-warning-600: #b45309; /* urgent, non-emergency */
+  --hg-warning-50: #fffbeb;
+  --hg-info-700: #1d4ed8;
+  --hg-info-50: #eff6ff;
+  /* AI-generated and unreviewed. A TPG 2020 control, not decoration. */
+  --hg-ai-600: #7c3aed;
+  --hg-ai-50: #f5f3ff;
+
+  /* Neutrals */
+  --hg-text: #1f2933;
+  --hg-text-muted: #52606d;
+  --hg-border: #d5dbe2;
+  --hg-surface: #ffffff;
+  --hg-surface-alt: #f5f7fa;
+
+  --hg-radius: 6px;
+  --hg-gap: 16px;
+
+  /* A monospace face for anything read digit by digit or compared by eye:
+     ABHA numbers, patient ids, model fingerprints (AUDIT 8.3). */
+  --hg-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  --hg-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --hg-text: #e4e7eb;
+    --hg-text-muted: #9aa5b1;
+    --hg-border: #3e4c59;
+    --hg-surface: #1f2933;
+    --hg-surface-alt: #323f4b;
+
+    /* Re-checked on a dark surface: amber-600 loses contrast there and steps
+       up, exactly as AUDIT 8.3 warns. */
+    --hg-warning-600: #fbbf24;
+    --hg-danger-600: #f87171;
+    --hg-ai-600: #a78bfa;
+    --hg-primary-600: #4ade80;
+    --hg-primary-700: #86efac;
+    --hg-primary-50: #14261a;
+    --hg-danger-50: #2a1416;
+    --hg-warning-50: #2a2010;
+    --hg-info-50: #111c33;
+    --hg-ai-50: #1d1630;
+  }
+}

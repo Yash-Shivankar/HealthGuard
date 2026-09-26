@@ -4,8 +4,14 @@ from __future__ import annotations
 
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.permissions import DjangoModelPermissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from apps.patients.repositories.patient_repository import PatientRepository
+from common.api.scoped import RequireClinicMixin, TenantScopedMixin
 
 from apps.consent.serializers import ConsentArtefactSerializer
 from apps.consent.services.consent_service import ConsentService
@@ -98,3 +104,45 @@ class CurrentPatientView(APIView):
             service.forget(patient)
             request.session.pop(INTAKE_SESSION_KEY, None)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PatientListView(TenantScopedMixin, RequireClinicMixin, ListAPIView):
+    """Patients at the caller's clinic.
+
+    This endpoint deliberately did not exist until Phase 4. The Phase 2 note
+    said so plainly: before tenants and authentication, a patient list would
+    have been a cross-tenant leak with no tenants. Now it is scoped, and the
+    scoping is asserted in apps/accounts/tests/integration/test_api_isolation.py.
+
+    ``RequireClinicMixin`` rather than an empty list: a clinician shown zero
+    patients would read that as "none registered", when it means "your account
+    has no clinic".
+    """
+
+    serializer_class = PatientReadSerializer
+    permission_classes = [DjangoModelPermissions]
+    filter_backends = [SearchFilter, OrderingFilter]
+    # Name only. Searching by contact number would make this a way to look
+    # someone up from a number, which is the extraction path AUDIT 8.8 warns
+    # about - and the serializer masks the number on the way out anyway.
+    search_fields = ["name"]
+    ordering_fields = ["created_at", "name"]
+    ordering = ["-created_at"]
+
+    def base_queryset(self):
+        return PatientRepository.all_with_clinic()
+
+
+class PatientDetailView(TenantScopedMixin, RequireClinicMixin, RetrieveAPIView):
+    """One patient.
+
+    A record at another clinic returns **404, not 403**: 403 would confirm that
+    the record exists. The lookup runs against the scoped queryset, so this
+    needs no per-view check.
+    """
+
+    serializer_class = PatientReadSerializer
+    permission_classes = [DjangoModelPermissions]
+
+    def base_queryset(self):
+        return PatientRepository.all_with_clinic()

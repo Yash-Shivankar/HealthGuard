@@ -25,6 +25,11 @@ class AssessmentRepository:
         return TriageAssessment.objects.filter(patient=patient)
 
     @staticmethod
+    def all_for_queue() -> QuerySet[TriageAssessment]:
+        """Base queryset for the review-queue endpoints."""
+        return TriageAssessment.objects.select_related("patient", "clinic").all()
+
+    @staticmethod
     def awaiting_review() -> QuerySet[TriageAssessment]:
         """Feeds the Phase 3 compliance dashboard tile (AUDIT 8.5).
 

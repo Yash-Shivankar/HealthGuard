@@ -9,6 +9,7 @@ from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
+    path("auth/", include("apps.accounts.routes.api_v1")),
     path("patients/", include("apps.patients.routes.api_v1")),
     path("triage/", include("apps.triage.routes.api_v1")),
     # Schema and docs. SERVE_INCLUDE_SCHEMA is off, so these describe the API

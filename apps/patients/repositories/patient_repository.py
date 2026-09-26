@@ -59,6 +59,15 @@ class PatientRepository:
         return Patient.objects.count()
 
     @staticmethod
+    def all_with_clinic():
+        """Base queryset for the clinic-facing list and detail endpoints.
+
+        select_related because both render the clinic, and the default N+1 on a
+        list page is the same problem AUDIT 8.6 names for the admin.
+        """
+        return Patient.objects.select_related("clinic").all()
+
+    @staticmethod
     def created_before(cutoff):
         """Records past a retention horizon, oldest first.
 

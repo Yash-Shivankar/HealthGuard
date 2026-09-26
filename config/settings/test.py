@@ -38,7 +38,15 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 REST_FRAMEWORK = {  # noqa: F405
     **globals()["REST_FRAMEWORK"],
     "DEFAULT_THROTTLE_CLASSES": [],
-    "DEFAULT_THROTTLE_RATES": {"anon": None, "user": None, "triage": None},
+    # Every scope a view declares must appear here, including new ones - see
+    # the comment above. Missing keys surface as ImproperlyConfigured at request
+    # time, not at startup, so they look like a broken endpoint.
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": None,
+        "user": None,
+        "triage": None,
+        "login": None,
+    },
 }
 
 LOGGING["root"]["level"] = "WARNING"  # noqa: F405
