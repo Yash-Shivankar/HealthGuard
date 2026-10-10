@@ -44,3 +44,6 @@ coverage.xml
 # ---- Frontend --------------------------------------------------------------
 /frontend/node_modules/
 /frontend/dist/
+
+# ---- Local-only documentation (never pushed) -------------------------------
+/docs/
